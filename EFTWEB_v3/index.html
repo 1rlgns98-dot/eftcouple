@@ -16,14 +16,10 @@
       </div>
     </div>
 
-    <div class="role-switcher" aria-label="현재 사용 모드">
-      <button class="role-button active" type="button" data-role="personal">개인 기록</button>
-      <button class="role-button" type="button" data-role="couple">함께 보기</button>
-    </div>
   </header>
 
   <main class="layout">
-    <nav class="side-nav" id="sideNav" aria-label="현재 모드 메뉴">
+    <nav class="side-nav" id="sideNav" aria-label="앱 메뉴">
     </nav>
 
     <section class="workspace">
@@ -45,20 +41,30 @@
 
         <div class="onboarding-panel">
           <div class="section-head compact-head">
-            <p class="eyebrow">Start Here</p>
-            <h3>어떤 모드로 시작할까요?</h3>
-            <p>혼자 정리할 때와 둘이 함께 볼 때의 화면을 나누었습니다.</p>
+            <p class="eyebrow">Quick Start</p>
+            <h3>오늘 필요한 작업으로 바로 이동하세요.</h3>
+            <p>개인 기록과 공유공간을 모드로 나누지 않고, 각각 독립된 섹션으로 정리했습니다.</p>
           </div>
           <div class="role-card-grid">
-            <button class="role-start-card active" type="button" data-start-role="personal" data-start-view="checkin">
-              <span>개인 기록</span>
+            <button class="role-start-card active" type="button" data-jump="checkin">
+              <span>개인</span>
               <strong>내 감정 체크인</strong>
               <p>갈등 장면, 보호반응, 속감정, 바랐던 반응을 개인 기록으로 남깁니다.</p>
             </button>
-            <button class="role-start-card" type="button" data-start-role="couple" data-start-view="share">
-              <span>함께 보기</span>
-              <strong>함께 보는 공간</strong>
-              <p>공유된 기록, 고리 지도, 공동 미션을 중심으로 회복 대화를 연습합니다.</p>
+            <button class="role-start-card" type="button" data-jump="share">
+              <span>공유</span>
+              <strong>공유공간 확인</strong>
+              <p>배우자와 공유하기로 선택한 기록만 따로 모아 봅니다.</p>
+            </button>
+            <button class="role-start-card" type="button" data-jump="cycle">
+              <span>고리</span>
+              <strong>부정적 고리 지도</strong>
+              <p>두 사람 사이에서 반복되는 패턴과 그 아래 욕구를 함께 정리합니다.</p>
+            </button>
+            <button class="role-start-card" type="button" data-jump="missions">
+              <span>연습</span>
+              <strong>단계별 미션</strong>
+              <p>EFT 단계에 맞춰 개인 과제와 공동 미션을 진행합니다.</p>
             </button>
           </div>
         </div>

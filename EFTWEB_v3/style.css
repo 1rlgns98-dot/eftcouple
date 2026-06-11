@@ -270,7 +270,7 @@ h3 {
 }
 
 .role-card-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .role-start-card {
@@ -820,12 +820,6 @@ textarea {
   border-radius: 8px;
   color: var(--muted);
   background: rgba(255, 255, 255, 0.62);
-}
-
-.role-personal .couple-only,
-.role-personal .therapist-only,
-.role-couple .therapist-only {
-  display: none;
 }
 
 @media (max-width: 980px) {

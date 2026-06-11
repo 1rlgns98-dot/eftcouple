@@ -21,32 +21,17 @@ const eftStages = [
   }
 ];
 
-const roleDefaults = {
-  personal: "checkin",
-  couple: "share"
-};
-
-const roleNavigation = {
-  personal: [
-    { view: "home", label: "홈", icon: "⌂" },
-    { view: "stages", label: "EFT단계", icon: "◇" },
-    { view: "checkin", label: "체크인", icon: "＋" },
-    { view: "records", label: "내 기록", icon: "☰" },
-    { view: "cycle", label: "고리", icon: "↔" },
-    { view: "missions", label: "미션", icon: "✓" },
-    { view: "sessions", label: "회기", icon: "□" },
-    { view: "settings", label: "설정", icon: "⚙" }
-  ],
-  couple: [
-    { view: "home", label: "홈", icon: "⌂" },
-    { view: "stages", label: "EFT단계", icon: "◇" },
-    { view: "share", label: "공유", icon: "◉" },
-    { view: "cycle", label: "고리", icon: "↔" },
-    { view: "missions", label: "공동미션", icon: "✓" },
-    { view: "sessions", label: "회기", icon: "□" },
-    { view: "settings", label: "설정", icon: "⚙" }
-  ]
-};
+const appNavigation = [
+  { view: "home", label: "홈", icon: "⌂", mobile: true },
+  { view: "stages", label: "EFT단계", icon: "◇", mobile: false },
+  { view: "checkin", label: "체크인", icon: "＋", mobile: true },
+  { view: "records", label: "내 기록", icon: "☰", mobile: true },
+  { view: "share", label: "공유공간", icon: "◉", mobile: true },
+  { view: "cycle", label: "고리 지도", icon: "↔", mobile: false },
+  { view: "missions", label: "미션", icon: "✓", mobile: true },
+  { view: "sessions", label: "회기 정리", icon: "□", mobile: false },
+  { view: "settings", label: "설정", icon: "⚙", mobile: false }
+];
 
 const starterMissions = [
   createMission("개인", "갈등 장면에서 내가 보인 보호반응 표시하기", "", "1"),
@@ -60,18 +45,17 @@ const starterMissions = [
 
 let state = loadState();
 let currentStep = 1;
-let currentRole = "personal";
 let missionStageFilter = "all";
 
 const emptyTemplate = document.querySelector("#emptyTemplate");
 
 document.addEventListener("DOMContentLoaded", () => {
   bindNavigation();
-  bindRoleSwitcher();
   bindForms();
   setDefaultDates();
   moveStep(0);
-  setRole("personal", "home");
+  renderNavigation();
+  showView("home");
 });
 
 function createMission(type, title, due, stage = "1") {
@@ -126,12 +110,6 @@ function saveState() {
 
 function bindNavigation() {
   document.addEventListener("click", (event) => {
-    const roleStart = event.target.closest("[data-start-role]");
-    if (roleStart) {
-      setRole(roleStart.dataset.startRole, roleStart.dataset.startView);
-      return;
-    }
-
     const jumpButton = event.target.closest("[data-jump]");
     if (jumpButton) {
       showView(jumpButton.dataset.jump);
@@ -145,39 +123,18 @@ function bindNavigation() {
   });
 }
 
-function bindRoleSwitcher() {
-  document.querySelectorAll(".role-button").forEach((button) => {
-    button.addEventListener("click", () => setRole(button.dataset.role));
-  });
-}
-
-function setRole(role, preferredView = roleDefaults[role]) {
-  currentRole = roleNavigation[role] ? role : "personal";
-  document.body.classList.remove("role-personal", "role-couple");
-  document.body.classList.add(`role-${currentRole}`);
-  document.querySelectorAll(".role-button").forEach((button) => {
-    button.classList.toggle("active", button.dataset.role === currentRole);
-  });
-  document.querySelectorAll(".role-start-card").forEach((card) => {
-    card.classList.toggle("active", card.dataset.startRole === currentRole);
-  });
-  renderNavigation();
-  showView(preferredView || roleDefaults[currentRole]);
-}
-
 function renderNavigation() {
-  const items = roleNavigation[currentRole];
   const sideNav = document.querySelector("#sideNav");
   const bottomNav = document.querySelector("#bottomNav");
 
-  sideNav.innerHTML = items.map((item) => `
+  sideNav.innerHTML = appNavigation.map((item) => `
     <button class="nav-item" type="button" data-view="${item.view}">
       <span aria-hidden="true">${item.icon}</span>
       <strong>${item.label}</strong>
     </button>
   `).join("");
 
-  bottomNav.innerHTML = items.slice(0, 5).map((item) => `
+  bottomNav.innerHTML = appNavigation.filter((item) => item.mobile).map((item) => `
     <button class="bottom-item" type="button" data-view="${item.view}">
       <span aria-hidden="true">${item.icon}</span>
       <strong>${item.label}</strong>
@@ -212,8 +169,8 @@ function setDefaultDates() {
 }
 
 function showView(id) {
-  const allowedViews = roleNavigation[currentRole].map((item) => item.view);
-  const viewId = allowedViews.includes(id) ? id : roleDefaults[currentRole];
+  const allowedViews = appNavigation.map((item) => item.view);
+  const viewId = allowedViews.includes(id) ? id : "home";
 
   document.querySelectorAll(".nav-item, .bottom-item").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === viewId);
