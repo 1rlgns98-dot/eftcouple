@@ -23,8 +23,7 @@ const eftStages = [
 
 const roleDefaults = {
   personal: "checkin",
-  couple: "share",
-  therapist: "dashboard"
+  couple: "share"
 };
 
 const roleNavigation = {
@@ -44,16 +43,6 @@ const roleNavigation = {
     { view: "share", label: "공유", icon: "◉" },
     { view: "cycle", label: "고리", icon: "↔" },
     { view: "missions", label: "공동미션", icon: "✓" },
-    { view: "sessions", label: "회기", icon: "□" },
-    { view: "settings", label: "설정", icon: "⚙" }
-  ],
-  therapist: [
-    { view: "home", label: "홈", icon: "⌂" },
-    { view: "stages", label: "EFT단계", icon: "◇" },
-    { view: "dashboard", label: "대시보드", icon: "▦" },
-    { view: "records", label: "공유기록", icon: "☰" },
-    { view: "cycle", label: "고리", icon: "↔" },
-    { view: "missions", label: "과제", icon: "✓" },
     { view: "sessions", label: "회기", icon: "□" },
     { view: "settings", label: "설정", icon: "⚙" }
   ]
@@ -164,7 +153,7 @@ function bindRoleSwitcher() {
 
 function setRole(role, preferredView = roleDefaults[role]) {
   currentRole = roleNavigation[role] ? role : "personal";
-  document.body.classList.remove("role-personal", "role-couple", "role-therapist");
+  document.body.classList.remove("role-personal", "role-couple");
   document.body.classList.add(`role-${currentRole}`);
   document.querySelectorAll(".role-button").forEach((button) => {
     button.classList.toggle("active", button.dataset.role === currentRole);
@@ -267,7 +256,7 @@ function saveCheckin(event) {
     need: data.need,
     newResponse: data.newResponse,
     sharePartner: form.sharePartner.checked,
-    shareTherapist: form.shareTherapist.checked
+    shareTherapist: false
   });
 
   saveState();
@@ -324,7 +313,6 @@ function renderAll() {
   renderCycle();
   renderMissions();
   renderSessions();
-  renderDashboard();
 }
 
 function renderHome() {
@@ -396,9 +384,8 @@ function renderRecords() {
   const search = (document.querySelector("#recordSearch")?.value || "").trim().toLowerCase();
   let records = [...state.checkins];
 
-  if (filter === "private") records = records.filter((record) => !record.sharePartner && !record.shareTherapist);
+  if (filter === "private") records = records.filter((record) => !record.sharePartner);
   if (filter === "partner") records = records.filter((record) => record.sharePartner);
-  if (filter === "therapist") records = records.filter((record) => record.shareTherapist);
 
   if (search) {
     records = records.filter((record) => {
@@ -449,7 +436,6 @@ function renderRecordCards(container, records, editable) {
       <div class="badge-row">
         <span class="badge">${escapeHtml(getStageTitle(record.eftStep || "1"))}</span>
         ${record.sharePartner ? '<span class="badge green">배우자 공유</span>' : '<span class="badge">나만 보기</span>'}
-        ${record.shareTherapist ? '<span class="badge green">치료자 공유</span>' : ""}
       </div>
     `;
 
@@ -458,7 +444,6 @@ function renderRecordCards(container, records, editable) {
       actions.className = "card-actions";
       actions.innerHTML = `
         <button class="small-button" type="button" data-action="partner">${record.sharePartner ? "배우자 공유 해제" : "배우자 공유"}</button>
-        <button class="small-button" type="button" data-action="therapist">${record.shareTherapist ? "치료자 공유 해제" : "치료자 공유"}</button>
         <button class="small-button" type="button" data-action="delete">삭제</button>
       `;
       actions.addEventListener("click", (event) => handleRecordAction(event, record.id));
@@ -477,7 +462,6 @@ function handleRecordAction(event, id) {
   if (!record) return;
 
   if (button.dataset.action === "partner") record.sharePartner = !record.sharePartner;
-  if (button.dataset.action === "therapist") record.shareTherapist = !record.shareTherapist;
   if (button.dataset.action === "delete") state.checkins = state.checkins.filter((item) => item.id !== id);
 
   record.updatedAt = new Date().toISOString();
@@ -617,30 +601,6 @@ function renderSessions() {
     `;
     container.appendChild(card);
   });
-}
-
-function renderDashboard() {
-  const therapistRecords = state.checkins.filter((record) => record.shareTherapist);
-  const sharedRecords = state.checkins.filter((record) => record.sharePartner);
-  const completed = state.missions.filter((mission) => mission.done).length;
-
-  document.querySelector("#statsGrid").innerHTML = [
-    ["전체 체크인", state.checkins.length],
-    ["배우자 공유", sharedRecords.length],
-    ["치료자 공유", therapistRecords.length],
-    ["미션 완료", `${completed}/${state.missions.length}`]
-  ].map(([label, value]) => `<article class="stat-card"><span>${label}</span><strong>${value}</strong></article>`).join("");
-
-  renderMiniList("#dashCheckins", therapistRecords.slice(0, 5).map((record) => `${record.emotion} ${record.intensity}/10 - ${record.primary || record.scene}`));
-  renderMiniList("#dashMissions", state.missions.map((mission) => `${mission.done ? "완료" : "진행"} · ${getStageTitle(mission.stage || "1")} · ${mission.type} · ${mission.title}`));
-  renderMiniList("#dashSessions", state.sessions.slice(0, 5).map((session) => `${session.kind} · ${session.date} · ${session.scene}`));
-
-  document.querySelector("#dashCycle").innerHTML = state.cycle
-    ? `<p><strong>고리:</strong> ${escapeHtml(state.cycle.cycleName || "이름 미정")}</p>
-       <p><strong>A:</strong> ${escapeHtml(state.cycle.aAction || "")} → ${escapeHtml(state.cycle.aPrimary || "")}</p>
-       <p><strong>B:</strong> ${escapeHtml(state.cycle.bAction || "")} → ${escapeHtml(state.cycle.bPrimary || "")}</p>
-       <p><strong>새 반응:</strong> ${escapeHtml(state.cycle.aNew || "A 미정")} / ${escapeHtml(state.cycle.bNew || "B 미정")}</p>`
-    : '<div class="empty-state">고리 지도가 없습니다.</div>';
 }
 
 function renderMiniList(selector, items) {
