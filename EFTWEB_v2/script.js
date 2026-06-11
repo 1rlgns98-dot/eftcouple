@@ -1,5 +1,40 @@
 const STORAGE_KEY = "eftweb-v1";
 
+const roleDefaults = {
+  personal: "checkin",
+  couple: "share",
+  therapist: "dashboard"
+};
+
+const roleNavigation = {
+  personal: [
+    { view: "home", label: "홈", icon: "⌂" },
+    { view: "checkin", label: "체크인", icon: "＋" },
+    { view: "records", label: "내 기록", icon: "☰" },
+    { view: "cycle", label: "고리", icon: "↔" },
+    { view: "missions", label: "미션", icon: "✓" },
+    { view: "sessions", label: "회기", icon: "□" },
+    { view: "settings", label: "설정", icon: "⚙" }
+  ],
+  couple: [
+    { view: "home", label: "홈", icon: "⌂" },
+    { view: "share", label: "공유", icon: "◉" },
+    { view: "cycle", label: "고리", icon: "↔" },
+    { view: "missions", label: "공동미션", icon: "✓" },
+    { view: "sessions", label: "회기", icon: "□" },
+    { view: "settings", label: "설정", icon: "⚙" }
+  ],
+  therapist: [
+    { view: "home", label: "홈", icon: "⌂" },
+    { view: "dashboard", label: "대시보드", icon: "▦" },
+    { view: "records", label: "공유기록", icon: "☰" },
+    { view: "cycle", label: "고리", icon: "↔" },
+    { view: "missions", label: "과제", icon: "✓" },
+    { view: "sessions", label: "회기", icon: "□" },
+    { view: "settings", label: "설정", icon: "⚙" }
+  ]
+};
+
 const starterMissions = [
   createMission("개인", "오늘 올라온 감정에 정확한 이름 붙이기", ""),
   createMission("개인", "겉반응 아래의 일차정서를 한 문장으로 적기", ""),
@@ -11,17 +46,17 @@ const starterMissions = [
 
 let state = loadState();
 let currentStep = 1;
+let currentRole = "personal";
 
 const emptyTemplate = document.querySelector("#emptyTemplate");
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.body.classList.add("role-personal");
   bindNavigation();
   bindRoleSwitcher();
   bindForms();
   setDefaultDates();
   moveStep(0);
-  renderAll();
+  setRole("personal", "home");
 });
 
 function createMission(type, title, due) {
@@ -64,27 +99,64 @@ function saveState() {
 }
 
 function bindNavigation() {
-  document.querySelectorAll("[data-view]").forEach((button) => {
-    button.addEventListener("click", () => showView(button.dataset.view));
-  });
+  document.addEventListener("click", (event) => {
+    const roleStart = event.target.closest("[data-start-role]");
+    if (roleStart) {
+      setRole(roleStart.dataset.startRole, roleStart.dataset.startView);
+      return;
+    }
 
-  document.querySelectorAll("[data-jump]").forEach((button) => {
-    button.addEventListener("click", () => showView(button.dataset.jump));
+    const jumpButton = event.target.closest("[data-jump]");
+    if (jumpButton) {
+      showView(jumpButton.dataset.jump);
+      return;
+    }
+
+    const viewButton = event.target.closest("[data-view]");
+    if (viewButton) {
+      showView(viewButton.dataset.view);
+    }
   });
 }
 
 function bindRoleSwitcher() {
-  document.querySelectorAll("[data-role]").forEach((button) => {
-    button.addEventListener("click", () => {
-      document.querySelectorAll("[data-role]").forEach((item) => item.classList.toggle("active", item === button));
-      document.body.classList.remove("role-personal", "role-couple", "role-therapist");
-      document.body.classList.add(`role-${button.dataset.role}`);
-
-      if (button.dataset.role === "therapist") showView("dashboard");
-      if (button.dataset.role === "couple") showView("share");
-      if (button.dataset.role === "personal") showView("home");
-    });
+  document.querySelectorAll(".role-button").forEach((button) => {
+    button.addEventListener("click", () => setRole(button.dataset.role));
   });
+}
+
+function setRole(role, preferredView = roleDefaults[role]) {
+  currentRole = roleNavigation[role] ? role : "personal";
+  document.body.classList.remove("role-personal", "role-couple", "role-therapist");
+  document.body.classList.add(`role-${currentRole}`);
+  document.querySelectorAll(".role-button").forEach((button) => {
+    button.classList.toggle("active", button.dataset.role === currentRole);
+  });
+  document.querySelectorAll(".role-start-card").forEach((card) => {
+    card.classList.toggle("active", card.dataset.startRole === currentRole);
+  });
+  renderNavigation();
+  showView(preferredView || roleDefaults[currentRole]);
+}
+
+function renderNavigation() {
+  const items = roleNavigation[currentRole];
+  const sideNav = document.querySelector("#sideNav");
+  const bottomNav = document.querySelector("#bottomNav");
+
+  sideNav.innerHTML = items.map((item) => `
+    <button class="nav-item" type="button" data-view="${item.view}">
+      <span aria-hidden="true">${item.icon}</span>
+      <strong>${item.label}</strong>
+    </button>
+  `).join("");
+
+  bottomNav.innerHTML = items.slice(0, 5).map((item) => `
+    <button class="bottom-item" type="button" data-view="${item.view}">
+      <span aria-hidden="true">${item.icon}</span>
+      <strong>${item.label}</strong>
+    </button>
+  `).join("");
 }
 
 function bindForms() {
@@ -111,11 +183,14 @@ function setDefaultDates() {
 }
 
 function showView(id) {
+  const allowedViews = roleNavigation[currentRole].map((item) => item.view);
+  const viewId = allowedViews.includes(id) ? id : roleDefaults[currentRole];
+
   document.querySelectorAll(".nav-item, .bottom-item").forEach((button) => {
-    button.classList.toggle("active", button.dataset.view === id);
+    button.classList.toggle("active", button.dataset.view === viewId);
   });
   document.querySelectorAll(".view").forEach((view) => {
-    view.classList.toggle("active", view.id === id);
+    view.classList.toggle("active", view.id === viewId);
   });
   renderAll();
 }

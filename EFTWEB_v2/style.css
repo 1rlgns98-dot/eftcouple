@@ -157,10 +157,19 @@ h3 {
 }
 
 .nav-item {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
   padding: 10px 12px;
   color: var(--ink);
   text-align: left;
   background: transparent;
+}
+
+.nav-item span {
+  font-weight: 900;
+  text-align: center;
 }
 
 .nav-item:hover,
@@ -237,11 +246,73 @@ h3 {
 }
 
 .flow-grid,
+.role-card-grid,
 .stats-grid,
 .settings-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
+}
+
+.onboarding-panel {
+  margin-bottom: 18px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow);
+}
+
+.compact-head {
+  margin-bottom: 12px;
+}
+
+.role-card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.role-start-card {
+  min-height: 172px;
+  padding: 16px;
+  border: 1px solid var(--soft-line);
+  border-radius: 8px;
+  color: inherit;
+  text-align: left;
+  background: var(--paper);
+  transition: transform 0.16s ease, border 0.16s ease, background 0.16s ease;
+}
+
+.role-start-card:hover {
+  transform: translateY(-1px);
+}
+
+.role-start-card.active {
+  border-color: var(--blue);
+  background: #f0f6f7;
+}
+
+.role-start-card span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin-bottom: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: white;
+  background: var(--blue);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.role-start-card strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+}
+
+.role-start-card p {
+  margin-bottom: 0;
+  color: var(--muted);
 }
 
 .flow-card {
@@ -629,6 +700,7 @@ textarea {
   }
 
   .flow-grid,
+  .role-card-grid,
   .stats-grid,
   .settings-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -660,6 +732,7 @@ textarea {
   .role-switcher,
   .side-nav,
   .flow-grid,
+  .role-card-grid,
   .stats-grid,
   .settings-grid {
     grid-template-columns: 1fr;
@@ -675,6 +748,7 @@ textarea {
   }
 
   .flow-grid,
+  .role-card-grid,
   .stats-grid,
   .settings-grid {
     display: grid;
@@ -723,6 +797,11 @@ textarea {
   .bottom-item.active {
     color: white;
     background: var(--blue);
+  }
+
+  .bottom-item:disabled {
+    cursor: default;
+    opacity: 0.45;
   }
 
   .toolbar,
