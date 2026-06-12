@@ -29,6 +29,7 @@ let currentStep = 0;
 let recordFilter = "all";
 
 document.addEventListener("DOMContentLoaded", () => {
+  hydrateIcons();
   bindNavigation();
   bindCheckin();
   bindCycle();
@@ -39,6 +40,30 @@ document.addEventListener("DOMContentLoaded", () => {
   renderAll();
   showView("home");
 });
+
+function hydrateIcons(root = document) {
+  root.querySelectorAll("[data-lucide]").forEach((target) => {
+    target.innerHTML = iconSvg(target.dataset.lucide, target.dataset.size || 21);
+  });
+}
+
+function iconSvg(name, size = 21) {
+  const attrs = `width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"`;
+  const icons = {
+    house: `<path d="M3 10.8 12 3l9 7.8"></path><path d="M5 10v10h14V10"></path><path d="M9 20v-6h6v6"></path>`,
+    "heart-pulse": `<path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 0 1 12 6a5 5 0 0 1 7.5 6.6Z"></path><path d="M3 12h3l2-3 3 6 2-3h3"></path>`,
+    "book-open": `<path d="M12 7v14"></path><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H12v17H7.5A3.5 3.5 0 0 0 4 22Z"></path><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H12v17h4.5A3.5 3.5 0 0 1 20 22Z"></path>`,
+    "refresh-cw": `<path d="M21 12a9 9 0 0 1-15.1 6.6"></path><path d="M3 12A9 9 0 0 1 18.1 5.4"></path><path d="M21 5v6h-6"></path><path d="M3 19v-6h6"></path>`,
+    plus: `<path d="M12 5v14"></path><path d="M5 12h14"></path>`,
+    zap: `<path d="M13 2 4 14h7l-1 8 10-13h-7z"></path>`,
+    shield: `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>`,
+    droplet: `<path d="M12 22a7 7 0 0 0 7-7c0-4-7-13-7-13S5 11 5 15a7 7 0 0 0 7 7Z"></path>`,
+    "heart-handshake": `<path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 0 1 12 6a5 5 0 0 1 7.5 6.6Z"></path><path d="m8 14 2 2 4-4"></path>`,
+    sprout: `<path d="M7 20h10"></path><path d="M12 20V10"></path><path d="M12 10C9 10 7 8 7 5c3 0 5 2 5 5Z"></path><path d="M12 13c3 0 5-2 5-5-3 0-5 2-5 5Z"></path>`,
+    messages: `<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"></path><path d="M8 9h8"></path><path d="M8 13h5"></path>`
+  };
+  return `<svg ${attrs}>${icons[name] || icons.plus}</svg>`;
+}
 
 function loadState() {
   const fallback = {
@@ -332,14 +357,14 @@ function heatColor(value) {
 function renderLayerStats() {
   const records = weekRecords();
   const stats = [
-    { key: "protect", label: "보호반응", icon: "○", color: "var(--emo-protect)", bg: "var(--emo-protect-bg)", count: records.filter((item) => item.protective).length },
-    { key: "primary", label: "속감정", icon: "◌", color: "var(--emo-primary)", bg: "var(--emo-primary-bg)", count: records.filter((item) => item.primary).length },
-    { key: "need", label: "애착욕구", icon: "♡", color: "var(--emo-need)", bg: "var(--emo-need-bg)", count: records.filter((item) => item.need).length },
-    { key: "new", label: "새 반응", icon: "↗", color: "var(--emo-new)", bg: "var(--emo-new-bg)", count: records.filter((item) => item.newResponse).length }
+    { key: "protect", label: "보호반응", icon: "shield", color: "var(--emo-protect)", bg: "var(--emo-protect-bg)", count: records.filter((item) => item.protective).length },
+    { key: "primary", label: "속감정", icon: "droplet", color: "var(--emo-primary)", bg: "var(--emo-primary-bg)", count: records.filter((item) => item.primary).length },
+    { key: "need", label: "애착욕구", icon: "heart-handshake", color: "var(--emo-need)", bg: "var(--emo-need-bg)", count: records.filter((item) => item.need).length },
+    { key: "new", label: "새 반응", icon: "sprout", color: "var(--emo-new)", bg: "var(--emo-new-bg)", count: records.filter((item) => item.newResponse).length }
   ];
   document.querySelector("#layerStats").innerHTML = stats.map((item) => `
     <div class="layer-tile" style="background:${item.bg}; color:${item.color}">
-      <span>${item.icon}</span>
+      <span>${iconSvg(item.icon, 18)}</span>
       <strong>${item.count}</strong><small>${item.label}</small>
     </div>
   `).join("");

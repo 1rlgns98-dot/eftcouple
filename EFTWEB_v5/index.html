@@ -61,12 +61,12 @@
 
         <div class="quick-grid">
           <button class="quick-card" type="button" data-view="checkin">
-            <span class="icon clay">♡</span>
+            <span class="icon clay" data-lucide="heart-pulse" aria-hidden="true"></span>
             <strong>감정 체크인</strong>
             <small>3단계로 기록하기</small>
           </button>
           <button class="quick-card" type="button" data-view="cycle">
-            <span class="icon sky">↻</span>
+            <span class="icon sky" data-lucide="refresh-cw" aria-hidden="true"></span>
             <strong>고리 지도</strong>
             <small>A ↔ B 패턴 보기</small>
           </button>
@@ -225,7 +225,7 @@
           <p>문제는 한 사람이 아니라, 두 사람 사이에서 반복되는 고리입니다.</p>
         </div>
         <article class="signal-card">
-          <span>⚡</span>
+          <span data-lucide="zap" aria-hidden="true"></span>
           <div>
             <p class="overline">고리가 시작되는 신호</p>
             <strong id="cycleSignalText">답장이 늦거나 표정이 굳어질 때</strong>
@@ -330,11 +330,11 @@
     </main>
 
     <nav class="bottom-nav" aria-label="주요 메뉴">
-      <button class="active" type="button" data-view="home"><span>⌂</span><strong>홈</strong></button>
-      <button type="button" data-view="checkin"><span>♡</span><strong>체크인</strong></button>
-      <button type="button" data-view="records"><span>□</span><strong>기록</strong></button>
-      <button type="button" data-view="cycle"><span>↻</span><strong>고리</strong></button>
-      <button type="button" data-view="more"><span>＋</span><strong>더보기</strong></button>
+      <button class="active" type="button" data-view="home"><span data-lucide="house"></span><strong>홈</strong></button>
+      <button type="button" data-view="checkin"><span data-lucide="heart-pulse"></span><strong>체크인</strong></button>
+      <button type="button" data-view="records"><span data-lucide="book-open"></span><strong>기록</strong></button>
+      <button type="button" data-view="cycle"><span data-lucide="refresh-cw"></span><strong>고리</strong></button>
+      <button type="button" data-view="more"><span data-lucide="plus"></span><strong>더보기</strong></button>
     </nav>
   </div>
 

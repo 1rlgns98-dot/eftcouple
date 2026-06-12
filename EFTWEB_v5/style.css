@@ -426,7 +426,13 @@ h1, h2 {
   margin-bottom: 12px;
   place-items: center;
   border-radius: 13px;
-  font-size: 22px;
+}
+
+.quick-card .icon svg,
+.layer-tile svg,
+.signal-card svg,
+.bottom-nav svg {
+  display: block;
 }
 
 .quick-card .clay { color: var(--clay-600); background: var(--clay-100); }
@@ -766,6 +772,7 @@ input[type="range"] {
   height: 32px;
   place-items: center;
   border-radius: 999px;
+  color: var(--ink-500);
   background: var(--warm-100);
 }
 
@@ -890,6 +897,8 @@ input[type="range"] {
 }
 
 .bottom-nav span {
+  display: grid;
+  place-items: center;
   font-size: 20px;
   line-height: 1;
 }
