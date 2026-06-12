@@ -133,6 +133,8 @@ const missionBank = stages.flatMap((stage) => [
 let state = loadState();
 let currentStep = 0;
 let recordFilter = "all";
+let selectedCycleId = null;
+let editingCycleId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   hydrateIcons();
@@ -321,13 +323,76 @@ function renderStepDots() {
 function bindCycle() {
   document.querySelector("#cycleForm").addEventListener("submit", (event) => {
     event.preventDefault();
+    const form = event.currentTarget;
     const data = Object.fromEntries(new FormData(event.currentTarget).entries());
-    state.cycles.unshift({ id: uid(), date: new Date().toISOString(), ...data });
+    let cycle;
+    if (editingCycleId) {
+      const index = state.cycles.findIndex((item) => item.id === editingCycleId);
+      if (index >= 0) {
+        cycle = { ...state.cycles[index], ...data, updatedAt: new Date().toISOString() };
+        state.cycles[index] = cycle;
+      }
+    }
+    if (!cycle) {
+      cycle = { id: uid(), date: new Date().toISOString(), ...data };
+      state.cycles.unshift(cycle);
+    }
+    selectedCycleId = cycle.id;
+    editingCycleId = null;
     saveState();
-    event.currentTarget.reset();
+    form.reset();
+    document.querySelector("#cycleSubmit").textContent = "고리 지도 저장";
     renderCycle();
     renderHome();
   });
+  document.querySelector("#cycleMap").addEventListener("click", (event) => {
+    const editButton = event.target.closest("[data-cycle-edit]");
+    if (editButton) {
+      startCycleEdit(editButton.dataset.cycleEdit);
+      return;
+    }
+    const deleteButton = event.target.closest("[data-cycle-delete]");
+    if (deleteButton) {
+      deleteCycle(deleteButton.dataset.cycleDelete);
+      return;
+    }
+    const button = event.target.closest("[data-cycle-select]");
+    if (!button) return;
+    selectedCycleId = button.dataset.cycleSelect;
+    renderCycle();
+  });
+}
+
+function startCycleEdit(id) {
+  const cycle = state.cycles.find((item) => item.id === id);
+  if (!cycle) return;
+  const form = document.querySelector("#cycleForm");
+  form.elements.signal.value = cycle.signal || "";
+  form.elements.aProtect.value = cycle.aProtect || "";
+  form.elements.bProtect.value = cycle.bProtect || "";
+  form.elements.aUnder.value = cycle.aUnder || "";
+  form.elements.bUnder.value = cycle.bUnder || "";
+  form.elements.repair.value = cycle.repair || "";
+  selectedCycleId = id;
+  editingCycleId = id;
+  document.querySelector("#cycleSubmit").textContent = "수정 저장";
+  renderCycle();
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function deleteCycle(id) {
+  const cycle = state.cycles.find((item) => item.id === id);
+  if (!cycle) return;
+  if (!confirm("이 고리 지도를 삭제할까요?")) return;
+  state.cycles = state.cycles.filter((item) => item.id !== id);
+  if (selectedCycleId === id) selectedCycleId = state.cycles[0]?.id || null;
+  if (editingCycleId === id) {
+    editingCycleId = null;
+    document.querySelector("#cycleForm").reset();
+    document.querySelector("#cycleSubmit").textContent = "고리 지도 저장";
+  }
+  saveState();
+  renderCycle();
 }
 
 function bindMissions() {
@@ -680,37 +745,138 @@ function renderCycle() {
     renderList("#cycleMap", [], "고리 지도가 비어 있어요", "기록 카드의 ‘고리에 반영’을 누르거나 아래 양식으로 첫 고리 지도를 저장하세요.", () => "");
     return;
   }
+  const selected = state.cycles.find((cycle) => cycle.id === selectedCycleId) || latest;
+  selectedCycleId = selected.id;
   document.querySelector("#cycleMap").innerHTML = `
-    ${cycleWheelMarkup(latest, self, partner)}
+    <div class="cycle-current-head">
+      <div>
+        <p class="overline">${selected.id === latest.id ? "CURRENT CYCLE" : "SAVED CYCLE"}</p>
+        <h2>${selected.id === latest.id ? "현재 고리 지도" : "선택한 과거 고리 지도"}</h2>
+      </div>
+      <span>${formatDate(selected.date)}</span>
+    </div>
+    ${cycleWheelMarkup(selected, self, partner)}
     <div class="cycle-overview">
       <div class="cycle-trigger">
         <small>시작 신호</small>
-        <strong>${escapeHtml(latest.signal)}</strong>
+        <strong>${escapeHtml(selected.signal)}</strong>
       </div>
       <div class="cycle-flow">
-        <div><span>${escapeHtml(self)}</span><p>${escapeHtml(latest.aProtect || "겉반응 미입력")}</p></div>
+        <div><span>${escapeHtml(self)}</span><p>${escapeHtml(selected.aProtect || "겉반응 미입력")}</p></div>
         <b>→</b>
-        <div><span>${escapeHtml(partner)}</span><p>${escapeHtml(latest.bProtect || "겉반응 미입력")}</p></div>
+        <div><span>${escapeHtml(partner)}</span><p>${escapeHtml(selected.bProtect || "겉반응 미입력")}</p></div>
         <b>→</b>
         <div><span>반복 고리</span><p>서로의 속감정과 욕구가 더 숨겨짐</p></div>
       </div>
     </div>
     <div class="cycle-pair">
       <div class="cycle-column">
-        ${cycleNode(`${self}의 겉반응`, latest.aProtect, "var(--emo-protect)")}
-        ${cycleNode(`${self}의 속감정·욕구`, latest.aUnder, "var(--emo-primary)")}
+        ${cycleNode(`${self}의 겉반응`, selected.aProtect, "var(--emo-protect)")}
+        ${cycleNode(`${self}의 속감정·욕구`, selected.aUnder, "var(--emo-primary)")}
       </div>
       <div class="cycle-arrow">↔</div>
       <div class="cycle-column">
-        ${cycleNode(`${partner}의 겉반응`, latest.bProtect, "var(--emo-protect)")}
-        ${cycleNode(`${partner}의 속감정·욕구`, latest.bUnder, "var(--emo-need)")}
+        ${cycleNode(`${partner}의 겉반응`, selected.bProtect, "var(--emo-protect)")}
+        ${cycleNode(`${partner}의 속감정·욕구`, selected.bUnder, "var(--emo-need)")}
       </div>
     </div>
     <div class="repair-card">
       <small>고리를 멈추는 공동 문장</small>
-      <p>“${escapeHtml(latest.repair)}”</p>
+      <p>“${escapeHtml(selected.repair)}”</p>
     </div>
+    ${cycleHistoryMarkup(self, partner, selected.id)}
   `;
+}
+
+function cycleHistoryMarkup(self, partner, selectedId) {
+  const previous = state.cycles.slice(1);
+  const all = state.cycles;
+  const signals = [...new Set(all.map((cycle) => compactText(cycle.signal)).filter(Boolean))];
+  const repairs = all.filter((cycle) => compactText(cycle.repair)).length;
+  const latest = all[0];
+  const prior = all[1];
+  return `
+    <section class="cycle-history-card">
+      <header>
+        <div>
+          <p class="overline">CHANGE FLOW</p>
+          <h2>고리 변화 흐름</h2>
+        </div>
+        <span>${all.length}개 저장</span>
+      </header>
+      <div class="cycle-change-grid">
+        <article>
+          <strong>${signals.length || 0}</strong>
+          <p>반복 신호 유형</p>
+        </article>
+        <article>
+          <strong>${repairs}</strong>
+          <p>회복 문장 기록</p>
+        </article>
+      </div>
+      ${prior ? `
+        <div class="cycle-compare">
+          <h3>직전 지도와 비교</h3>
+          <p><b>이전 신호</b>${escapeHtml(prior.signal || "입력 없음")}</p>
+          <p><b>현재 신호</b>${escapeHtml(latest.signal || "입력 없음")}</p>
+          <p><b>${escapeHtml(self)} 변화</b>${escapeHtml(compareText(prior.aProtect, latest.aProtect))}</p>
+          <p><b>${escapeHtml(partner)} 변화</b>${escapeHtml(compareText(prior.bProtect, latest.bProtect))}</p>
+        </div>
+      ` : `
+        <p class="cycle-history-empty">다음 고리를 저장하면 이곳에서 이전 지도와 현재 지도를 비교할 수 있습니다.</p>
+      `}
+      <div class="cycle-history-list">
+        <h3>고리 목록</h3>
+        <div class="cycle-list-buttons">
+          ${all.map((cycle, index) => `
+            <article class="cycle-list-item ${cycle.id === selectedId ? "active" : ""}">
+              <button type="button" data-cycle-select="${cycle.id}">
+                <span>${index === 0 ? "현재" : `이전 ${index}`}</span>
+                <strong>${escapeHtml(cycle.signal || "고리 신호 미입력")}</strong>
+                <small>${formatDate(cycle.date)}</small>
+              </button>
+              <div>
+                <button type="button" data-cycle-edit="${cycle.id}">수정</button>
+                <button type="button" data-cycle-delete="${cycle.id}">삭제</button>
+              </div>
+            </article>
+          `).join("")}
+        </div>
+        ${previous.length ? `
+          <h3>과거 고리 상세</h3>
+          ${previous.map((cycle, index) => `
+            <details>
+              <summary>
+                <span>${formatDate(cycle.date)} 저장</span>
+                <strong>${escapeHtml(cycle.signal || `과거 고리 ${index + 1}`)}</strong>
+              </summary>
+              <div class="cycle-history-detail">
+                ${cycleNode(`${self}의 겉반응`, cycle.aProtect, "var(--emo-protect)")}
+                ${cycleNode(`${partner}의 겉반응`, cycle.bProtect, "var(--emo-protect)")}
+                ${cycleNode(`${self}의 속감정·욕구`, cycle.aUnder, "var(--emo-primary)")}
+                ${cycleNode(`${partner}의 속감정·욕구`, cycle.bUnder, "var(--emo-need)")}
+                <p><strong>회복 문장</strong> · ${escapeHtml(cycle.repair || "아직 입력되지 않았습니다")}</p>
+              </div>
+            </details>
+          `).join("")}
+        ` : ""}
+      </div>
+    </section>
+  `;
+}
+
+function compactText(value) {
+  return String(value || "").trim();
+}
+
+function compareText(before, after) {
+  const previous = compactText(before);
+  const current = compactText(after);
+  if (!previous && !current) return "아직 비교할 내용이 충분하지 않습니다.";
+  if (previous === current) return `비슷하게 반복됨: ${current}`;
+  if (!previous) return `새로 기록됨: ${current}`;
+  if (!current) return `현재는 비어 있음. 이전에는 “${previous}”`;
+  return `이전 “${previous}” → 현재 “${current}”`;
 }
 
 function cycleWheelMarkup(cycle, self, partner) {

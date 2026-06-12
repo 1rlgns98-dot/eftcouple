@@ -960,6 +960,33 @@ input[type="range"] {
   display: grid;
   gap: 12px;
   margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.cycle-current-head,
+.cycle-history-card header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cycle-current-head h2,
+.cycle-history-card h2 {
+  margin: 0;
+  font-family: "Gowun Batang", "Batang", serif;
+  font-size: 19px;
+}
+
+.cycle-current-head > span,
+.cycle-history-card header > span {
+  flex: none;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: var(--clay-700);
+  background: var(--clay-50);
+  font-size: 11px;
+  font-weight: 900;
 }
 
 .cycle-wheel-card {
@@ -1226,6 +1253,186 @@ input[type="range"] {
   margin: 8px 0 0;
   font-family: "Gowun Batang", "Batang", serif;
   font-size: 17px;
+  line-height: 1.5;
+}
+
+.cycle-history-card {
+  display: grid;
+  gap: 13px;
+  padding: 16px;
+  border: 1px solid var(--border-soft);
+  border-radius: 22px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.cycle-change-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.cycle-change-grid article {
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--warm-100);
+}
+
+.cycle-change-grid strong {
+  display: block;
+  color: var(--clay-700);
+  font-family: "Gowun Batang", "Batang", serif;
+  font-size: 24px;
+}
+
+.cycle-change-grid p,
+.cycle-history-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.cycle-compare {
+  display: grid;
+  gap: 8px;
+  padding: 13px;
+  border-radius: 16px;
+  background: var(--emo-need-bg);
+}
+
+.cycle-compare h3,
+.cycle-history-list h3 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.cycle-compare p {
+  margin: 0;
+  color: var(--ink-700);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.cycle-compare b {
+  display: block;
+  color: var(--sage-700);
+  font-size: 10.5px;
+}
+
+.cycle-history-list {
+  display: grid;
+  gap: 9px;
+}
+
+.cycle-list-buttons {
+  display: grid;
+  gap: 8px;
+}
+
+.cycle-list-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: stretch;
+  padding: 6px;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: var(--warm-50);
+}
+
+.cycle-list-item.active {
+  border-color: var(--clay-500);
+  background: var(--clay-50);
+  box-shadow: 0 0 0 3px rgba(201, 122, 82, 0.12);
+}
+
+.cycle-list-item > button {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 46px;
+  padding: 10px;
+  border: 0;
+  border-radius: 12px;
+  color: var(--ink-800);
+  background: transparent;
+  text-align: left;
+}
+
+.cycle-list-item > div {
+  display: grid;
+  gap: 6px;
+}
+
+.cycle-list-item > div button {
+  min-width: 46px;
+  padding: 0 9px;
+  border: 1px solid var(--border-soft);
+  border-radius: 11px;
+  color: var(--ink-700);
+  background: var(--white);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.cycle-list-item span {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: var(--clay-700);
+  background: var(--white);
+  font-size: 10.5px;
+  font-weight: 900;
+}
+
+.cycle-list-item strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cycle-list-item small {
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.cycle-history-list details {
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: var(--warm-50);
+}
+
+.cycle-history-list summary {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.cycle-history-list summary span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.cycle-history-list summary strong {
+  color: var(--ink-800);
+  font-size: 12.5px;
+}
+
+.cycle-history-detail {
+  display: grid;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+
+.cycle-history-detail p {
+  margin: 0;
+  color: var(--ink-700);
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -1687,6 +1894,14 @@ input[type="range"] {
   .wheel-arrow.arrow-3,
   .wheel-arrow.arrow-4 {
     left: 62px;
+  }
+
+  .cycle-list-item {
+    grid-template-columns: 1fr;
+  }
+
+  .cycle-list-item > div {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .cycle-flow b,
