@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/EFTWEB_v5/index.html"
+      "destination": "/EFTWEB_v6/index.html"
     },
     {
       "source": "/:path*",
-      "destination": "/EFTWEB_v5/:path*"
+      "destination": "/EFTWEB_v6/:path*"
     }
   ]
 }
