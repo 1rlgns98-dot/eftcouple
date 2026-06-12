@@ -1,0 +1,1243 @@
+const STORAGE_KEY = "eftweb-v9";
+const LEGACY_KEY = "eftweb-v7";
+const DRAFT_KEY = "eftweb-v9-draft";
+const META_KEY = "eftweb-v9-meta";
+
+function uid() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+const stages = [
+  {
+    id: "stage1",
+    step: 1,
+    phase: "1기 · 안정화",
+    short: "어려움 정리",
+    title: "지금의 어려움 함께 보기",
+    focus: "누가 잘못했는지보다, 두 사람이 어떤 순간에 힘들어지는지 안전하게 정리합니다.",
+    checkin: "사건을 길게 설명하기보다 ‘어떤 장면에서 감정이 올라왔는지’를 짧고 구체적으로 적어보세요.",
+    cycle: "아직 고리를 완성하려 하지 않아도 괜찮습니다. 반복되는 시작 신호만 모으는 단계입니다.",
+    prompts: ["최근 가장 힘들었던 장면 하나", "내가 보인 겉반응", "배우자가 보인 겉반응"],
+    missionPersonal: "이번 주 힘들었던 장면을 하나만 골라 감정 강도와 몸 반응 적기",
+    missionCouple: "서로를 설득하지 않고 ‘각자 힘들었던 순간’만 5분씩 말하기"
+  },
+  {
+    id: "stage2",
+    step: 2,
+    phase: "1기 · 고리 보기",
+    short: "고리 알아차리기",
+    title: "반복되는 고리 알아차리기",
+    focus: "A가 다가가거나 따지면 B가 물러나고, 그 물러남이 다시 A의 불안을 키우는 식의 순환을 봅니다.",
+    checkin: "내 반응만 보지 말고 ‘내 반응이 배우자의 어떤 반응을 불렀는지’를 함께 적어보세요.",
+    cycle: "고리 지도에서 A와 B의 겉반응을 먼저 채우세요. 속감정은 아직 불완전해도 됩니다.",
+    prompts: ["고리 시작 신호", "A의 겉반응", "B의 겉반응", "고리가 커지는 방식"],
+    missionPersonal: "오늘 내 보호반응 하나에 이름 붙이기",
+    missionCouple: "갈등이 커지기 전 ‘우리 고리에 들어간 것 같아’라고 말해보기"
+  },
+  {
+    id: "stage3",
+    step: 3,
+    phase: "1기 · 멈춤",
+    short: "멈춤 신호",
+    title: "고리를 멈추는 작은 신호 만들기",
+    focus: "갈등을 해결하기 전에 먼저 고리를 알아차리고 속도를 늦추는 공동 신호를 만듭니다.",
+    checkin: "기록의 마지막에는 다음번에 멈춤을 요청할 수 있는 짧은 문장을 적어보세요.",
+    cycle: "고리 지도 하단의 공동 문장을 실제로 사용할 수 있게 짧고 자연스럽게 만드세요.",
+    prompts: ["멈춤이 필요한 신호", "내가 듣기 쉬운 멈춤 문장", "다시 시작할 때 필요한 조건"],
+    missionPersonal: "내가 과열되는 몸 신호 2가지 적기",
+    missionCouple: "갈등 중 사용할 멈춤 문장을 함께 정하기"
+  },
+  {
+    id: "stage4",
+    step: 4,
+    phase: "2기 · 속감정",
+    short: "속감정 찾기",
+    title: "겉반응 아래의 속감정 찾기",
+    focus: "비난, 방어, 침묵 아래에 있는 외로움, 두려움, 부족감 같은 더 여린 감정을 찾습니다.",
+    checkin: "‘화났다’에서 멈추지 말고, 그 아래에 있던 더 여린 감정을 한 문장으로 적어보세요.",
+    cycle: "고리 지도에 겉반응뿐 아니라 A와 B의 속감정을 같이 넣어 고리의 깊이를 봅니다.",
+    prompts: ["화 아래의 감정", "물러남 아래의 감정", "가장 말하기 어려운 마음"],
+    missionPersonal: "오늘의 겉감정 아래 속감정 하나 찾기",
+    missionCouple: "배우자의 겉반응 아래에 있을 수 있는 마음을 추측이 아닌 질문으로 물어보기"
+  },
+  {
+    id: "stage5",
+    step: 5,
+    phase: "2기 · 재참여",
+    short: "다시 참여",
+    title: "멀어지는 사람도 다시 참여하기",
+    focus: "물러나는 사람이 관계에서 빠지는 대신, 부담과 두려움을 조금씩 말할 수 있도록 돕습니다.",
+    checkin: "침묵하거나 피한 순간이 있다면, 그때 말하지 못했던 부담과 두려움을 적어보세요.",
+    cycle: "물러남이 무관심이 아니라 압도감이나 실패감에서 온 것일 수 있음을 지도에 표현합니다.",
+    prompts: ["물러난 이유", "압도된 감각", "다시 다가가기 위해 필요한 안전감"],
+    missionPersonal: "피하고 싶었던 순간에 사실 말하고 싶었던 한 문장 적기",
+    missionCouple: "한 사람이 3분간 말하면 다른 사람은 반박 없이 요약만 하기"
+  },
+  {
+    id: "stage6",
+    step: 6,
+    phase: "2기 · 부드러운 요청",
+    short: "부드럽게 말하기",
+    title: "서운함을 부드럽게 말하기",
+    focus: "비난처럼 나오던 말 아래의 두려움과 필요를 더 직접적이고 부드럽게 표현합니다.",
+    checkin: "배우자에게 바랐던 반응을 ‘당신은 왜’가 아니라 ‘나는 필요해’ 문장으로 바꿔보세요.",
+    cycle: "추궁이나 비난이 연결 욕구에서 나온 것임을 지도에 분명히 적습니다.",
+    prompts: ["내가 정말 원한 반응", "비난 대신 할 수 있는 요청", "가까워지고 싶은 마음"],
+    missionPersonal: "비난 문장 하나를 요청 문장으로 바꾸기",
+    missionCouple: "하루 5분, 한 가지 서운함을 부드러운 요청으로 말해보기"
+  },
+  {
+    id: "stage7",
+    step: 7,
+    phase: "2기 · 새 대화",
+    short: "새 대화",
+    title: "새로운 대화를 실제로 해보기",
+    focus: "속감정과 욕구를 서로에게 직접 말하고, 상대는 방어보다 반응을 연습합니다.",
+    checkin: "기록의 마지막에 실제로 배우자에게 해볼 새 문장을 적고 공유 여부를 선택하세요.",
+    cycle: "고리 지도는 이제 ‘멈춤’에서 ‘새 반응’으로 넘어가는 연습장이 됩니다.",
+    prompts: ["직접 말할 속감정", "상대에게 필요한 반응", "갈등 후 회복 문장"],
+    missionPersonal: "속감정과 욕구가 담긴 새 문장 하나 연습하기",
+    missionCouple: "갈등 후 회복 대화를 10분 안에 다시 시도하기"
+  },
+  {
+    id: "stage8",
+    step: 8,
+    phase: "3기 · 통합",
+    short: "공동 해결",
+    title: "문제를 함께 해결하는 방식 만들기",
+    focus: "정서적 안전감을 바탕으로 생활 문제를 적이 아닌 팀의 문제로 다룹니다.",
+    checkin: "감정 기록 뒤에 ‘우리가 함께 해결할 실제 문제’를 하나만 적어보세요.",
+    cycle: "고리 지도에서 회복 문장이 실제 문제 해결로 이어지는지 확인합니다.",
+    prompts: ["함께 풀 문제", "각자 양보 가능한 부분", "안전한 대화 순서"],
+    missionPersonal: "문제 해결 전에 내 감정과 욕구를 먼저 구분하기",
+    missionCouple: "한 가지 생활 문제를 팀 과제로 이름 붙이고 작은 행동 정하기"
+  },
+  {
+    id: "stage9",
+    step: 9,
+    phase: "3기 · 유지",
+    short: "유지하기",
+    title: "새로운 연결을 유지하기",
+    focus: "다시 고리에 빠질 수 있음을 전제로, 회복 루틴과 재발 신호를 관리합니다.",
+    checkin: "기록은 문제 분석보다 ‘새 반응이 작동한 순간’과 ‘다시 조심할 신호’를 모으는 데 씁니다.",
+    cycle: "고리 지도는 위기 지도가 아니라 유지 계획으로 사용합니다.",
+    prompts: ["다시 조심할 신호", "잘 작동한 새 반응", "유지할 작은 의식"],
+    missionPersonal: "이번 주 내가 다르게 반응한 순간 하나 기록하기",
+    missionCouple: "한 주에 한 번 고마웠던 반응과 다음 주 유지할 행동 말하기"
+  }
+];
+
+const missionBank = stages.flatMap((stage) => [
+  { id: `${stage.id}-personal`, type: "personal", stageId: stage.id, title: stage.missionPersonal },
+  { id: `${stage.id}-couple`, type: "couple", stageId: stage.id, title: stage.missionCouple }
+]);
+
+let state = loadState();
+let currentStep = 0;
+let recordFilter = "all";
+let selectedCycleId = null;
+let editingCycleId = null;
+let editingCheckinId = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  hydrateIcons();
+  bindNavigation();
+  bindCheckin();
+  bindCycle();
+  bindMissions();
+  bindSessions();
+  bindSettings();
+  hydrateStageSelects();
+  restoreCheckinDraft();
+  renderAll();
+  showView("home");
+});
+
+function loadState() {
+  const fallback = {
+    currentStageId: "stage2",
+    profile: { myName: "나", partnerName: "" },
+    checkins: [],
+    cycles: [],
+    customMissions: [],
+    missionDone: {},
+    missionReviews: {},
+    sessions: []
+  };
+  try {
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      // 이전 버전(v7) 기록을 자동으로 이어받습니다.
+      const legacy = localStorage.getItem(LEGACY_KEY);
+      if (legacy) {
+        raw = legacy;
+        localStorage.setItem(STORAGE_KEY, legacy);
+      }
+    }
+    const saved = JSON.parse(raw);
+    return normalizeState({ ...fallback, ...saved });
+  } catch {
+    return fallback;
+  }
+}
+
+function loadMeta() {
+  try {
+    return JSON.parse(localStorage.getItem(META_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveMeta(patch) {
+  const meta = { ...loadMeta(), ...patch };
+  localStorage.setItem(META_KEY, JSON.stringify(meta));
+  return meta;
+}
+
+let toastTimer = null;
+function showToast(message, tone = "default") {
+  const shell = document.querySelector(".phone-shell") || document.body;
+  let host = shell.querySelector(".toast-host");
+  if (!host) {
+    host = document.createElement("div");
+    host.className = "toast-host";
+    shell.appendChild(host);
+  }
+  const icons = { success: "check-circle", info: "info", warn: "alert", undo: "undo" };
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${tone}`;
+  toast.innerHTML = `<span class="toast-icon">${iconSvg(icons[tone] || "info", 17)}</span><p>${escapeHtml(message)}</p>`;
+  host.replaceChildren(toast);
+  requestAnimationFrame(() => toast.classList.add("show"));
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 280);
+  }, 2600);
+}
+
+function normalizeState(nextState) {
+  return {
+    ...nextState,
+    profile: { myName: "나", partnerName: "", ...(nextState.profile || {}) },
+    checkins: nextState.checkins || [],
+    cycles: nextState.cycles || [],
+    customMissions: nextState.customMissions || [],
+    missionDone: nextState.missionDone || {},
+    missionReviews: nextState.missionReviews || {},
+    sessions: nextState.sessions || []
+  };
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function hydrateIcons(root = document) {
+  root.querySelectorAll("[data-lucide]").forEach((target) => {
+    target.innerHTML = iconSvg(target.dataset.lucide, target.dataset.size || 21);
+  });
+}
+
+function iconSvg(name, size = 21) {
+  const attrs = `width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"`;
+  const icons = {
+    house: `<path d="M3 10.8 12 3l9 7.8"></path><path d="M5 10v10h14V10"></path><path d="M9 20v-6h6v6"></path>`,
+    "heart-pulse": `<path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 0 1 12 6a5 5 0 0 1 7.5 6.6Z"></path><path d="M3 12h3l2-3 3 6 2-3h3"></path>`,
+    "book-open": `<path d="M12 7v14"></path><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H12v17H7.5A3.5 3.5 0 0 0 4 22Z"></path><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H12v17h4.5A3.5 3.5 0 0 1 20 22Z"></path>`,
+    "refresh-cw": `<path d="M21 12a9 9 0 0 1-15.1 6.6"></path><path d="M3 12A9 9 0 0 1 18.1 5.4"></path><path d="M21 5v6h-6"></path><path d="M3 19v-6h6"></path>`,
+    plus: `<path d="M12 5v14"></path><path d="M5 12h14"></path>`,
+    zap: `<path d="M13 2 4 14h7l-1 8 10-13h-7z"></path>`,
+    shield: `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>`,
+    droplet: `<path d="M12 22a7 7 0 0 0 7-7c0-4-7-13-7-13S5 11 5 15a7 7 0 0 0 7 7Z"></path>`,
+    "heart-handshake": `<path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 0 1 12 6a5 5 0 0 1 7.5 6.6Z"></path><path d="m8 14 2 2 4-4"></path>`,
+    sprout: `<path d="M7 20h10"></path><path d="M12 20V10"></path><path d="M12 10C9 10 7 8 7 5c3 0 5 2 5 5Z"></path><path d="M12 13c3 0 5-2 5-5-3 0-5 2-5 5Z"></path>`,
+    messages: `<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"></path><path d="M8 9h8"></path><path d="M8 13h5"></path>`,
+    "check-circle": `<path d="M21 12a9 9 0 1 1-5.7-8.4"></path><path d="m9 11 3 3 8-8"></path>`,
+    check: `<path d="M20 6 9 17l-5-5"></path>`,
+    info: `<circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path>`,
+    alert: `<path d="M12 3 2 20h20Z"></path><path d="M12 10v4"></path><path d="M12 17h.01"></path>`,
+    undo: `<path d="M9 14 4 9l5-5"></path><path d="M4 9h11a5 5 0 0 1 0 10h-1"></path>`,
+    pencil: `<path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>`,
+    trash: `<path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>`,
+    share: `<circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 13.5 6.8 4M15.4 6.5 8.6 10.5"></path>`,
+    download: `<path d="M12 3v12"></path><path d="m7 11 5 5 5-5"></path><path d="M5 21h14"></path>`,
+    upload: `<path d="M12 21V9"></path><path d="m7 13 5-5 5 5"></path><path d="M5 4h14"></path>`,
+    database: `<ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"></path><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"></path>`,
+    clock: `<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>`,
+    "arrow-left": `<path d="M19 12H5"></path><path d="m12 19-7-7 7-7"></path>`
+  };
+  return `<svg ${attrs}>${icons[name] || icons.plus}</svg>`;
+}
+
+function bindNavigation() {
+  document.body.addEventListener("click", (event) => {
+    const target = event.target.closest("[data-view]");
+    if (!target) return;
+    showView(target.dataset.view);
+  });
+}
+
+function showView(id) {
+  const view = document.getElementById(id) ? id : "home";
+  document.querySelectorAll(".view").forEach((item) => item.classList.toggle("active", item.id === view));
+  document.querySelectorAll(".bottom-nav button").forEach((button) => {
+    const main = ["home", "checkin", "records", "cycle", "more"].includes(view) ? view : "more";
+    button.classList.toggle("active", button.dataset.view === main);
+  });
+  renderAll();
+  scrollAppToTop();
+}
+
+function scrollAppToTop() {
+  const scroller = document.querySelector(".app-scroll");
+  if (!scroller) return;
+  try {
+    scroller.scrollTo({ top: 0, behavior: "smooth" });
+  } catch {
+    scroller.scrollTop = 0;
+  }
+}
+
+function bindCheckin() {
+  document.querySelector("#intensityInput").addEventListener("input", (event) => {
+    document.querySelector("#intensityOutput").textContent = event.target.value;
+  });
+  document.querySelector("#prevStep").addEventListener("click", () => moveStep(-1));
+  document.querySelector("#nextStep").addEventListener("click", () => moveStep(1));
+  document.querySelector("#cancelCheckinEdit").addEventListener("click", () => {
+    resetCheckinForm(document.querySelector("#checkinForm"));
+    showToast("새 체크인을 시작해요", "info");
+  });
+  document.querySelectorAll("[data-fill]").forEach((group) => {
+    group.addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      const field = document.querySelector(`[name="${group.dataset.fill}"]`);
+      if (field.tagName === "TEXTAREA") {
+        field.value = field.value ? `${field.value}\n${button.textContent}` : button.textContent;
+      } else {
+        field.value = field.value ? `${field.value}, ${button.textContent}` : button.textContent;
+      }
+    });
+  });
+  document.querySelectorAll("[data-choice-field]").forEach((group) => {
+    group.addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      const field = document.querySelector(`[name="${group.dataset.choiceField}"]`);
+      field.value = button.dataset.value;
+      group.querySelectorAll("button").forEach((item) => item.classList.toggle("active", item === button));
+      if (group.dataset.choiceField === "weather") document.querySelector("#weatherCustomInput").value = "";
+    });
+  });
+  document.querySelector("#weatherCustomInput").addEventListener("input", (event) => {
+    const value = event.target.value.trim();
+    if (!value) return;
+    document.querySelector("#weatherInput").value = value;
+    document.querySelectorAll("[data-choice-field='weather'] button").forEach((button) => button.classList.remove("active"));
+  });
+  const draftFields = ["weather", "scene", "emotion", "intensity", "body", "protective", "secondaryEmotion", "primary", "need", "newResponse", "share", "stageId"];
+  const checkinForm = document.querySelector("#checkinForm");
+  checkinForm.addEventListener("input", () => {
+    if (editingCheckinId) return;
+    saveCheckinDraft(checkinForm);
+  });
+  checkinForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = Object.fromEntries(new FormData(form).entries());
+    if (editingCheckinId) {
+      const index = state.checkins.findIndex((item) => item.id === editingCheckinId);
+      if (index >= 0) {
+        state.checkins[index] = {
+          ...state.checkins[index],
+          ...data,
+          intensity: Number(data.intensity),
+          updatedAt: new Date().toISOString()
+        };
+      }
+      editingCheckinId = null;
+      saveState();
+      resetCheckinForm(form);
+      showToast("기록을 수정했어요", "success");
+      requestAnimationFrame(() => showView("records"));
+      return;
+    }
+    state.checkins.unshift({
+      id: uid(),
+      date: new Date().toISOString(),
+      author: displayName("self"),
+      ...data,
+      intensity: Number(data.intensity)
+    });
+    saveState();
+    clearCheckinDraft();
+    resetCheckinForm(form);
+    showToast("감정 체크인을 저장했어요", "success");
+    requestAnimationFrame(() => showView("records"));
+  });
+  moveStep(0);
+}
+
+function serializeCheckinForm(form) {
+  return JSON.stringify(Object.fromEntries(new FormData(form).entries()));
+}
+
+function saveCheckinDraft(form) {
+  const data = Object.fromEntries(new FormData(form).entries());
+  const hasContent = (data.scene || data.emotion || data.body || data.primary || data.need || data.newResponse || "").trim();
+  if (!hasContent) {
+    clearCheckinDraft();
+    return;
+  }
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+}
+
+function clearCheckinDraft() {
+  localStorage.removeItem(DRAFT_KEY);
+}
+
+function restoreCheckinDraft() {
+  let draft;
+  try {
+    draft = JSON.parse(localStorage.getItem(DRAFT_KEY));
+  } catch {
+    draft = null;
+  }
+  if (!draft) return;
+  populateCheckinForm(draft);
+}
+
+function populateCheckinForm(record) {
+  const form = document.querySelector("#checkinForm");
+  ["scene", "emotion", "body", "primary", "need", "newResponse"].forEach((name) => {
+    if (form.elements[name]) form.elements[name].value = record[name] || "";
+  });
+  ["protective", "secondaryEmotion", "share", "stageId"].forEach((name) => {
+    if (form.elements[name] && record[name]) form.elements[name].value = record[name];
+  });
+  const intensity = Number(record.intensity || 5);
+  document.querySelector("#intensityInput").value = intensity;
+  document.querySelector("#intensityOutput").textContent = String(intensity);
+  const weather = record.weather || "가깝고 편안함";
+  document.querySelector("#weatherInput").value = weather;
+  document.querySelector("#weatherCustomInput").value = "";
+  let matched = false;
+  document.querySelectorAll("[data-choice-field='weather'] button").forEach((button) => {
+    const active = button.dataset.value === weather;
+    button.classList.toggle("active", active);
+    if (active) matched = true;
+  });
+  if (!matched) document.querySelector("#weatherCustomInput").value = weather;
+}
+
+function startCheckinEdit(id) {
+  const record = state.checkins.find((item) => item.id === id);
+  if (!record) return;
+  editingCheckinId = id;
+  showView("checkin");
+  populateCheckinForm(record);
+  currentStep = 0;
+  moveStep(0);
+  document.querySelector("#saveCheckin").textContent = "수정 저장";
+  document.querySelector("#checkinForm").classList.add("is-editing");
+}
+
+function resetCheckinForm(form) {
+  form.reset();
+  editingCheckinId = null;
+  form.classList.remove("is-editing");
+  document.querySelector("#saveCheckin").textContent = "저장";
+  document.querySelector("#weatherInput").value = "가깝고 편안함";
+  document.querySelector("#weatherCustomInput").value = "";
+  document.querySelectorAll("[data-choice-field='weather'] button").forEach((button, index) => button.classList.toggle("active", index === 0));
+  document.querySelector("#intensityInput").value = 5;
+  document.querySelector("#intensityOutput").textContent = "5";
+  currentStep = 0;
+  moveStep(0);
+}
+
+function moveStep(delta) {
+  currentStep = Math.min(2, Math.max(0, currentStep + delta));
+  document.querySelectorAll(".form-step").forEach((step) => {
+    step.classList.toggle("active", Number(step.dataset.step) === currentStep);
+  });
+  document.querySelector("#prevStep").classList.toggle("hidden", currentStep === 0);
+  document.querySelector("#nextStep").classList.toggle("hidden", currentStep === 2);
+  document.querySelector("#saveCheckin").classList.toggle("hidden", currentStep !== 2);
+  renderStepDots();
+  renderCheckinGuide();
+}
+
+function renderStepDots() {
+  const labels = ["장면·감정", "속마음", "새 반응"];
+  document.querySelector("#stepDots").innerHTML = labels.map((label, index) =>
+    `<span class="step-dot ${index === currentStep ? "active" : ""}">${label}</span>`
+  ).join("");
+}
+
+function bindCycle() {
+  document.querySelector("#cycleForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = Object.fromEntries(new FormData(event.currentTarget).entries());
+    let cycle;
+    if (editingCycleId) {
+      const index = state.cycles.findIndex((item) => item.id === editingCycleId);
+      if (index >= 0) {
+        cycle = { ...state.cycles[index], ...data, updatedAt: new Date().toISOString() };
+        state.cycles[index] = cycle;
+      }
+    }
+    if (!cycle) {
+      cycle = { id: uid(), date: new Date().toISOString(), ...data };
+      state.cycles.unshift(cycle);
+    }
+    const wasEditing = Boolean(editingCycleId);
+    selectedCycleId = cycle.id;
+    editingCycleId = null;
+    saveState();
+    form.reset();
+    document.querySelector("#cycleSubmit").textContent = "고리 지도 저장";
+    renderCycle();
+    renderHome();
+    showToast(wasEditing ? "고리 지도를 수정했어요" : "고리 지도를 저장했어요", "success");
+  });
+  document.querySelector("#cycleMap").addEventListener("click", (event) => {
+    const editButton = event.target.closest("[data-cycle-edit]");
+    if (editButton) {
+      startCycleEdit(editButton.dataset.cycleEdit);
+      return;
+    }
+    const deleteButton = event.target.closest("[data-cycle-delete]");
+    if (deleteButton) {
+      deleteCycle(deleteButton.dataset.cycleDelete);
+      return;
+    }
+    const button = event.target.closest("[data-cycle-select]");
+    if (!button) return;
+    selectedCycleId = button.dataset.cycleSelect;
+    renderCycle();
+  });
+}
+
+function startCycleEdit(id) {
+  const cycle = state.cycles.find((item) => item.id === id);
+  if (!cycle) return;
+  const form = document.querySelector("#cycleForm");
+  form.elements.signal.value = cycle.signal || "";
+  form.elements.aProtect.value = cycle.aProtect || "";
+  form.elements.bProtect.value = cycle.bProtect || "";
+  form.elements.aUnder.value = cycle.aUnder || "";
+  form.elements.bUnder.value = cycle.bUnder || "";
+  form.elements.repair.value = cycle.repair || "";
+  selectedCycleId = id;
+  editingCycleId = id;
+  document.querySelector("#cycleSubmit").textContent = "수정 저장";
+  renderCycle();
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function deleteCycle(id) {
+  const cycle = state.cycles.find((item) => item.id === id);
+  if (!cycle) return;
+  if (!confirm("이 고리 지도를 삭제할까요?")) return;
+  state.cycles = state.cycles.filter((item) => item.id !== id);
+  if (selectedCycleId === id) selectedCycleId = state.cycles[0]?.id || null;
+  if (editingCycleId === id) {
+    editingCycleId = null;
+    document.querySelector("#cycleForm").reset();
+    document.querySelector("#cycleSubmit").textContent = "고리 지도 저장";
+  }
+  saveState();
+  renderCycle();
+}
+
+function bindMissions() {
+  document.querySelector("#missionForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(event.currentTarget).entries());
+    if (!data.title.trim()) return;
+    state.customMissions.unshift({
+      id: uid(),
+      type: data.type,
+      stageId: state.currentStageId,
+      title: data.title.trim()
+    });
+    saveState();
+    event.currentTarget.reset();
+    renderMissions();
+    showToast("새 미션을 추가했어요", "success");
+  });
+  document.querySelector("#missionList").addEventListener("click", (event) => {
+    const reviewButton = event.target.closest("[data-save-review]");
+    if (reviewButton) {
+      const id = reviewButton.dataset.saveReview;
+      const textarea = document.querySelector(`[data-review-input="${id}"]`);
+      state.missionReviews[id] = textarea.value.trim();
+      saveState();
+      renderMissions();
+      showToast("미션 후기를 저장했어요", "success");
+      return;
+    }
+    const button = event.target.closest("[data-mission]");
+    if (!button) return;
+    state.missionDone[button.dataset.mission] = !state.missionDone[button.dataset.mission];
+    saveState();
+    renderMissions();
+    renderStageCard();
+  });
+}
+
+function bindSessions() {
+  document.querySelector("#sessionForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(event.currentTarget).entries());
+    state.sessions.unshift({ id: uid(), date: new Date().toISOString(), ...data, stageId: state.currentStageId });
+    saveState();
+    event.currentTarget.reset();
+    renderSessions();
+    showToast("회기 정리를 저장했어요", "success");
+  });
+}
+
+function bindSettings() {
+  document.querySelector("#myNameInput").addEventListener("input", (event) => {
+    state.profile.myName = event.target.value.trim() || "나";
+    saveState();
+    renderProfileLabels();
+    renderRecords();
+    renderCycle();
+  });
+  document.querySelector("#partnerNameInput").addEventListener("input", (event) => {
+    state.profile.partnerName = event.target.value.trim();
+    saveState();
+    renderProfileLabels();
+    renderCycle();
+  });
+  document.querySelector("#currentStageSelect").addEventListener("change", (event) => {
+    state.currentStageId = event.target.value;
+    saveState();
+    hydrateStageSelects();
+    renderAll();
+    showToast("현재 EFT 단계를 바꿈어요", "success");
+  });
+  document.querySelector("#exportData").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `eftweb-v9-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    saveMeta({ lastBackup: new Date().toISOString() });
+    renderDataSummary();
+    showToast("백업 파일을 내려받았어요", "success");
+  });
+  document.querySelector("#importData").addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+      state = normalizeState({ ...loadState(), ...JSON.parse(await file.text()) });
+      saveState();
+      hydrateStageSelects();
+      renderAll();
+      showToast("백업을 불러왔어요", "success");
+    } catch {
+      showToast("백업 파일을 읽을 수 없어요", "warn");
+    }
+    event.target.value = "";
+  });
+  document.querySelector("#resetData").addEventListener("click", () => {
+    if (!confirm("저장된 모든 기록을 삭제할까요? 이 작업은 되돌릴 수 없어요.")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(LEGACY_KEY);
+    clearCheckinDraft();
+    state = loadState();
+    renderAll();
+    showView("home");
+    showToast("모든 기록을 삭제했어요", "info");
+  });
+}
+
+function hydrateStageSelects() {
+  const options = stages.map((stage) => `<option value="${stage.id}">${stage.step}단계 · ${stage.short}</option>`).join("");
+  document.querySelector("#stageSelect").innerHTML = options;
+  document.querySelector("#currentStageSelect").innerHTML = options;
+  document.querySelector("#stageSelect").value = state.currentStageId;
+  document.querySelector("#currentStageSelect").value = state.currentStageId;
+}
+
+function renderAll() {
+  document.querySelector("#todayLabel").textContent = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", weekday: "short" }).format(new Date());
+  hydrateStageSelects();
+  renderProfileLabels();
+  renderHome();
+  renderCheckinGuide();
+  renderRecords();
+  renderShared();
+  renderCycle();
+  renderMissions();
+  renderSessions();
+  renderRoadmap();
+  renderDataSummary();
+}
+
+function renderDataSummary() {
+  const host = document.querySelector("#dataSummary");
+  if (!host) return;
+  const meta = loadMeta();
+  const stats = [
+    { icon: "book-open", label: "감정 기록", value: state.checkins.length },
+    { icon: "refresh-cw", label: "고리 지도", value: state.cycles.length },
+    { icon: "notebook", label: "회기 정리", value: state.sessions.length }
+  ];
+  let bytes = 0;
+  try { bytes = new Blob([JSON.stringify(state)]).size; } catch { bytes = 0; }
+  const sizeText = bytes > 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${bytes} B`;
+  const lastBackup = meta.lastBackup
+    ? new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(meta.lastBackup))
+    : "아직 백업한 적 없음";
+  host.innerHTML = `
+    <div class="data-stat-row">
+      ${stats.map((s) => `
+        <div class="data-stat">
+          <span>${iconSvg(s.icon === "notebook" ? "messages" : s.icon, 16)}</span>
+          <strong>${s.value}</strong>
+          <small>${s.label}</small>
+        </div>
+      `).join("")}
+    </div>
+    <div class="data-meta">
+      <span>${iconSvg("clock", 14)} 마지막 백업 · ${lastBackup}</span>
+      <span>${iconSvg("database", 14)} 저장 용량 · ${sizeText}</span>
+    </div>
+  `;
+}
+
+function renderProfileLabels() {
+  const self = displayName("self");
+  const partner = displayName("partner");
+  document.querySelector(".avatar-button").textContent = self.slice(0, 2);
+  document.querySelector("#myNameInput").value = state.profile.myName === "나" ? "" : state.profile.myName;
+  document.querySelector("#partnerNameInput").value = state.profile.partnerName || "";
+  document.querySelector("#selfProtectLabel").textContent = `${self}의 겉반응`;
+  document.querySelector("#partnerProtectLabel").textContent = `${partner}의 겉반응`;
+  document.querySelector("#selfUnderLabel").textContent = `${self}의 속감정·욕구`;
+  document.querySelector("#partnerUnderLabel").textContent = `${partner}의 속감정·욕구`;
+}
+
+function displayName(which) {
+  if (which === "partner") return state.profile.partnerName || "배우자";
+  return state.profile.myName || "나";
+}
+
+function renderHome() {
+  const recent = state.checkins.slice(0, 14).reverse();
+  const avg = recent.length ? recent.reduce((sum, item) => sum + Number(item.intensity || 0), 0) / recent.length : 0;
+  document.querySelector("#avgIntensity").textContent = avg.toFixed(1);
+  document.querySelector("#intensityChart").innerHTML = buildChart(recent);
+  document.querySelector("#monthLabel").textContent = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long" }).format(new Date());
+  document.querySelector("#emotionCalendar").innerHTML = buildCalendar();
+  renderLayerStats();
+  renderStageCard();
+  renderInterventions();
+}
+
+function buildChart(records) {
+  const width = 384;
+  const height = 150;
+  if (!records.length) {
+    return `
+      <div class="empty-chart">
+        <strong>아직 기록이 없습니다</strong>
+        <p>감정 체크인을 저장하면 이곳에 실제 감정 강도 흐름이 그려집니다.</p>
+      </div>
+    `;
+  }
+  const padTop = 14;
+  const padBottom = 26;
+  const plotHeight = height - padTop - padBottom;
+  const xAt = (i) => records.length === 1 ? width / 2 : 8 + i * ((width - 16) / (records.length - 1));
+  const yAt = (value) => padTop + (1 - value / 10) * plotHeight;
+  const points = records.map((item, index) => ({ x: xAt(index), y: yAt(Number(item.intensity || 5)), label: dayLabel(item.date) }));
+  const line = points.map((point, index) => `${index ? "L" : "M"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
+  const area = `${line} L ${points.at(-1).x.toFixed(1)} ${height - padBottom} L ${points[0].x.toFixed(1)} ${height - padBottom} Z`;
+  return `
+    <svg viewBox="0 0 ${width} ${height}" role="img">
+      <path d="${area}" fill="rgba(201,122,82,0.12)"></path>
+      <path d="${line}" fill="none" stroke="#b3653e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+      ${points.map((point, index) => `<circle cx="${point.x}" cy="${point.y}" r="${index === points.length - 1 ? 5 : 3.5}" fill="${index === points.length - 1 ? "#b3653e" : "#fffdf8"}" stroke="#b3653e" stroke-width="2"></circle>`).join("")}
+      ${points.map((point, index) => index % Math.max(1, Math.ceil(points.length / 5)) === 0 ? `<text x="${point.x}" y="144" text-anchor="middle" fill="#897b72" font-size="10">${point.label}</text>` : "").join("")}
+    </svg>
+  `;
+}
+
+function buildCalendar() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const first = new Date(year, month, 1).getDay();
+  const last = new Date(year, month + 1, 0).getDate();
+  const intensityMap = {};
+  state.checkins.forEach((record) => {
+    const date = new Date(record.date);
+    if (date.getFullYear() === year && date.getMonth() === month) {
+      intensityMap[date.getDate()] = Math.max(intensityMap[date.getDate()] || 0, Number(record.intensity || 0));
+    }
+  });
+  const heads = ["일", "월", "화", "수", "목", "금", "토"].map((day) => `<div class="calendar-head">${day}</div>`);
+  const blanks = Array.from({ length: first }, () => "<div></div>");
+  const days = Array.from({ length: last }, (_, index) => {
+    const day = index + 1;
+    const value = intensityMap[day];
+    const bucket = heatColor(value);
+    return `<div class="calendar-day ${day === now.getDate() ? "today" : ""}" style="background:${bucket.bg}; color:${bucket.fg}" title="${day}일${value ? ` · 강도 ${value}` : ""}">${day}</div>`;
+  });
+  return [...heads, ...blanks, ...days].join("");
+}
+
+function heatColor(value) {
+  if (!value) return { bg: "#f4eee5", fg: "#b3a79d" };
+  if (value <= 2) return { bg: "#f6e2d5", fg: "#9c5333" };
+  if (value <= 4) return { bg: "#f0cfb9", fg: "#9c5333" };
+  if (value <= 6) return { bg: "#db9876", fg: "#fffdf8" };
+  if (value <= 8) return { bg: "#c97a52", fg: "#fffdf8" };
+  return { bg: "#b3653e", fg: "#fffdf8" };
+}
+
+function renderLayerStats() {
+  const records = weekRecords();
+  const stats = [
+    { label: "보호반응", icon: "shield", color: "var(--emo-protect)", bg: "var(--emo-protect-bg)", count: records.filter((item) => item.protective).length },
+    { label: "속감정", icon: "droplet", color: "var(--emo-primary)", bg: "var(--emo-primary-bg)", count: records.filter((item) => item.primary).length },
+    { label: "애착욕구", icon: "heart-handshake", color: "var(--emo-need)", bg: "var(--emo-need-bg)", count: records.filter((item) => item.need).length },
+    { label: "새 반응", icon: "sprout", color: "var(--emo-new)", bg: "var(--emo-new-bg)", count: records.filter((item) => item.newResponse).length }
+  ];
+  document.querySelector("#layerStats").innerHTML = stats.map((item) => `
+    <div class="layer-tile" style="background:${item.bg}; color:${item.color}">
+      <span>${iconSvg(item.icon, 18)}</span>
+      <strong>${item.count}</strong><small>${item.label}</small>
+    </div>
+  `).join("");
+}
+
+function renderStageCard() {
+  const stage = currentStage();
+  const stageMissions = visibleMissions();
+  const done = stageMissions.filter((mission) => state.missionDone[mission.id]).length;
+  const percent = stageMissions.length ? Math.round((done / stageMissions.length) * 100) : 0;
+  document.querySelector("#stageCard").innerHTML = `
+    <span class="badge">${stage.phase}</span>
+    <h2>${stage.step}단계 · ${stage.title}</h2>
+    <p>${stage.focus}</p>
+    <div class="progress" aria-label="현재 단계 미션 진행률"><div style="width:${percent}%"></div></div>
+    <p class="hint">현재 단계 미션 ${done}/${stageMissions.length}개 완료</p>
+  `;
+}
+
+function renderInterventions() {
+  const stage = currentStage();
+  document.querySelector("#homeIntervention").innerHTML = interventionMarkup("지금 단계의 개입 초점", stage.focus, stage.prompts);
+  document.querySelector("#cycleIntervention").innerHTML = interventionMarkup("고리 지도에서 볼 것", stage.cycle, stage.prompts);
+  document.querySelector("#missionIntervention").innerHTML = interventionMarkup("미션이 달라지는 이유", `${stage.phase}에서는 ${stage.focus}`, [stage.missionPersonal, stage.missionCouple]);
+}
+
+function renderCheckinGuide() {
+  const stage = currentStage();
+  const stepFocus = [
+    "먼저 장면과 감정 강도를 구체적으로 남깁니다.",
+    "겉반응 아래의 속감정과 애착욕구를 찾습니다.",
+    "현재 단계에 맞게 다음 반응을 작게 정합니다."
+  ];
+  document.querySelector("#checkinStageGuide").innerHTML = `
+    <header>
+      <h3>${stage.step}단계 체크인</h3>
+      <span class="intervention-chip">${stage.short}</span>
+    </header>
+    <p>${stage.checkin}</p>
+    <ul><li>${stepFocus[currentStep]}</li><li>${stage.prompts[currentStep] || stage.prompts[0]}</li></ul>
+  `;
+}
+
+function interventionMarkup(title, body, bullets) {
+  return `
+    <header>
+      <h2>${title}</h2>
+      <span class="intervention-chip">${currentStage().short}</span>
+    </header>
+    <p>${body}</p>
+    <ul>${bullets.slice(0, 3).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+  `;
+}
+
+function renderRecords() {
+  document.querySelectorAll("#recordFilter button").forEach((button) => {
+    button.classList.toggle("active", button.dataset.filter === recordFilter);
+    button.onclick = () => {
+      recordFilter = button.dataset.filter;
+      renderRecords();
+    };
+  });
+  renderList("#recordList", filteredRecords(), "아직 기록이 없어요", "감정 체크인에서 첫 기록을 남기면 홈, 공유, 미션 흐름에 연결됩니다.", renderRecordCard);
+}
+
+function renderShared() {
+  const records = state.checkins.filter((item) => item.share && item.share !== "private");
+  renderList("#sharedList", records, "공유한 기록이 없어요", "기록 카드에서 공유하기를 누르거나 체크인 저장 시 공유 범위를 선택하세요.", renderRecordCard);
+}
+
+function filteredRecords() {
+  if (recordFilter === "private") return state.checkins.filter((item) => !item.share || item.share === "private");
+  if (recordFilter === "shared") return state.checkins.filter((item) => item.share && item.share !== "private");
+  return state.checkins;
+}
+
+function renderRecordCard(record) {
+  const color = recordColor(record);
+  return `
+    <article class="record-card" style="--record-color:${color}">
+      <header><span>${formatDate(record.date)} · ${escapeHtml(record.author)}</span><strong>${currentStage(record.stageId).short}</strong></header>
+      <h3>${escapeHtml(record.emotion || "이름 붙이지 않은 감정")}</h3>
+      <div class="bar"><div style="width:${Number(record.intensity || 0) * 10}%"></div></div>
+      <p>${escapeHtml(record.scene || "장면 기록 없음")}</p>
+      ${record.primary ? `<p><strong>속감정</strong> · ${escapeHtml(record.primary)}</p>` : ""}
+      ${record.need ? `<p><strong>바랐던 반응</strong> · ${escapeHtml(record.need)}</p>` : ""}
+      ${record.newResponse ? `<p><strong>새 반응</strong> · ${escapeHtml(record.newResponse)}</p>` : ""}
+      <div class="card-actions">
+        <button type="button" class="act-edit" data-edit="${record.id}">${iconSvg("pencil", 14)}<span>수정</span></button>
+        <button type="button" data-share="${record.id}">${iconSvg("share", 14)}<span>${record.share && record.share !== "private" ? "공유 해제" : "공유"}</span></button>
+        <button type="button" data-cycle-from="${record.id}">${iconSvg("refresh-cw", 14)}<span>고리에 반영</span></button>
+        <button type="button" class="act-danger" data-delete="${record.id}">${iconSvg("trash", 14)}<span>삭제</span></button>
+      </div>
+    </article>
+  `;
+}
+
+document.addEventListener("click", (event) => {
+  const editButton = event.target.closest("[data-edit]");
+  const shareButton = event.target.closest("[data-share]");
+  const deleteButton = event.target.closest("[data-delete]");
+  const cycleButton = event.target.closest("[data-cycle-from]");
+  if (editButton) {
+    startCheckinEdit(editButton.dataset.edit);
+    return;
+  }
+  if (shareButton) {
+    const record = state.checkins.find((item) => item.id === shareButton.dataset.share);
+    const nowShared = !(record.share && record.share !== "private");
+    record.share = nowShared ? "partner" : "private";
+    saveState();
+    renderAll();
+    showToast(nowShared ? "배우자와 공유했어요" : "공유를 해제했어요", "success");
+  }
+  if (deleteButton) {
+    if (!confirm("이 기록을 삭제할까요?")) return;
+    state.checkins = state.checkins.filter((item) => item.id !== deleteButton.dataset.delete);
+    saveState();
+    renderAll();
+    showToast("기록을 삭제했어요", "info");
+  }
+  if (cycleButton) {
+    const record = state.checkins.find((item) => item.id === cycleButton.dataset.cycleFrom);
+    if (record) draftCycleFromRecord(record);
+  }
+});
+
+function draftCycleFromRecord(record) {
+  const form = document.querySelector("#cycleForm");
+  form.elements.signal.value = record.scene || "";
+  form.elements.aProtect.value = record.protective || "";
+  form.elements.aUnder.value = [record.primary, record.need].filter(Boolean).join(" · ");
+  form.elements.repair.value = record.newResponse || "지금 우리 고리에 들어간 것 같아. 잠깐 멈추고 다시 말해보자.";
+  showView("cycle");
+  showToast("기록을 고리 지도 입력으로 옮겼어요", "info");
+}
+
+function renderCycle() {
+  const latest = state.cycles[0];
+  const self = displayName("self");
+  const partner = displayName("partner");
+  document.querySelector("#cycleSignalText").textContent = latest?.signal || "아직 저장된 고리 신호가 없습니다";
+  if (!latest) {
+    renderList("#cycleMap", [], "고리 지도가 비어 있어요", "기록 카드의 ‘고리에 반영’을 누르거나 아래 양식으로 첫 고리 지도를 저장하세요.", () => "");
+    return;
+  }
+  const selected = state.cycles.find((cycle) => cycle.id === selectedCycleId) || latest;
+  selectedCycleId = selected.id;
+  document.querySelector("#cycleMap").innerHTML = `
+    <div class="cycle-current-head">
+      <div>
+        <p class="overline">${selected.id === latest.id ? "CURRENT CYCLE" : "SAVED CYCLE"}</p>
+        <h2>${selected.id === latest.id ? "현재 고리 지도" : "선택한 과거 고리 지도"}</h2>
+      </div>
+      <span>${formatDate(selected.date)}</span>
+    </div>
+    ${cycleWheelMarkup(selected, self, partner)}
+    <div class="cycle-overview">
+      <div class="cycle-trigger">
+        <small>시작 신호</small>
+        <strong>${escapeHtml(selected.signal)}</strong>
+      </div>
+      <div class="cycle-flow">
+        <div><span>${escapeHtml(self)}</span><p>${escapeHtml(selected.aProtect || "겉반응 미입력")}</p></div>
+        <b>→</b>
+        <div><span>${escapeHtml(partner)}</span><p>${escapeHtml(selected.bProtect || "겉반응 미입력")}</p></div>
+        <b>→</b>
+        <div><span>반복 고리</span><p>서로의 속감정과 욕구가 더 숨겨짐</p></div>
+      </div>
+    </div>
+    <div class="cycle-pair">
+      <div class="cycle-column">
+        ${cycleNode(`${self}의 겉반응`, selected.aProtect, "var(--emo-protect)")}
+        ${cycleNode(`${self}의 속감정·욕구`, selected.aUnder, "var(--emo-primary)")}
+      </div>
+      <div class="cycle-arrow">↔</div>
+      <div class="cycle-column">
+        ${cycleNode(`${partner}의 겉반응`, selected.bProtect, "var(--emo-protect)")}
+        ${cycleNode(`${partner}의 속감정·욕구`, selected.bUnder, "var(--emo-need)")}
+      </div>
+    </div>
+    <div class="repair-card">
+      <small>고리를 멈추는 공동 문장</small>
+      <p>“${escapeHtml(selected.repair)}”</p>
+    </div>
+    ${cycleHistoryMarkup(self, partner, selected.id)}
+  `;
+}
+
+function cycleHistoryMarkup(self, partner, selectedId) {
+  const previous = state.cycles.slice(1);
+  const all = state.cycles;
+  const signals = [...new Set(all.map((cycle) => compactText(cycle.signal)).filter(Boolean))];
+  const repairs = all.filter((cycle) => compactText(cycle.repair)).length;
+  const latest = all[0];
+  const prior = all[1];
+  return `
+    <section class="cycle-history-card">
+      <header>
+        <div>
+          <p class="overline">CHANGE FLOW</p>
+          <h2>고리 변화 흐름</h2>
+        </div>
+        <span>${all.length}개 저장</span>
+      </header>
+      <div class="cycle-change-grid">
+        <article>
+          <strong>${signals.length || 0}</strong>
+          <p>반복 신호 유형</p>
+        </article>
+        <article>
+          <strong>${repairs}</strong>
+          <p>회복 문장 기록</p>
+        </article>
+      </div>
+      ${prior ? `
+        <div class="cycle-compare">
+          <h3>직전 지도와 비교</h3>
+          <p><b>이전 신호</b>${escapeHtml(prior.signal || "입력 없음")}</p>
+          <p><b>현재 신호</b>${escapeHtml(latest.signal || "입력 없음")}</p>
+          <p><b>${escapeHtml(self)} 변화</b>${escapeHtml(compareText(prior.aProtect, latest.aProtect))}</p>
+          <p><b>${escapeHtml(partner)} 변화</b>${escapeHtml(compareText(prior.bProtect, latest.bProtect))}</p>
+        </div>
+      ` : `
+        <p class="cycle-history-empty">다음 고리를 저장하면 이곳에서 이전 지도와 현재 지도를 비교할 수 있습니다.</p>
+      `}
+      <div class="cycle-history-list">
+        <h3>고리 목록</h3>
+        <div class="cycle-list-buttons">
+          ${all.map((cycle, index) => `
+            <article class="cycle-list-item ${cycle.id === selectedId ? "active" : ""}">
+              <button type="button" data-cycle-select="${cycle.id}">
+                <span>${index === 0 ? "현재" : `이전 ${index}`}</span>
+                <strong>${escapeHtml(cycle.signal || "고리 신호 미입력")}</strong>
+                <small>${formatDate(cycle.date)}</small>
+              </button>
+              <div>
+                <button type="button" data-cycle-edit="${cycle.id}">수정</button>
+                <button type="button" data-cycle-delete="${cycle.id}">삭제</button>
+              </div>
+            </article>
+          `).join("")}
+        </div>
+        ${previous.length ? `
+          <h3>과거 고리 상세</h3>
+          ${previous.map((cycle, index) => `
+            <details>
+              <summary>
+                <span>${formatDate(cycle.date)} 저장</span>
+                <strong>${escapeHtml(cycle.signal || `과거 고리 ${index + 1}`)}</strong>
+              </summary>
+              <div class="cycle-history-detail">
+                ${cycleNode(`${self}의 겉반응`, cycle.aProtect, "var(--emo-protect)")}
+                ${cycleNode(`${partner}의 겉반응`, cycle.bProtect, "var(--emo-protect)")}
+                ${cycleNode(`${self}의 속감정·욕구`, cycle.aUnder, "var(--emo-primary)")}
+                ${cycleNode(`${partner}의 속감정·욕구`, cycle.bUnder, "var(--emo-need)")}
+                <p><strong>회복 문장</strong> · ${escapeHtml(cycle.repair || "아직 입력되지 않았습니다")}</p>
+              </div>
+            </details>
+          `).join("")}
+        ` : ""}
+      </div>
+    </section>
+  `;
+}
+
+function compactText(value) {
+  return String(value || "").trim();
+}
+
+function compareText(before, after) {
+  const previous = compactText(before);
+  const current = compactText(after);
+  if (!previous && !current) return "아직 비교할 내용이 충분하지 않습니다.";
+  if (previous === current) return `비슷하게 반복됨: ${current}`;
+  if (!previous) return `새로 기록됨: ${current}`;
+  if (!current) return `현재는 비어 있음. 이전에는 “${previous}”`;
+  return `이전 “${previous}” → 현재 “${current}”`;
+}
+
+function cycleWheelMarkup(cycle, self, partner) {
+  const steps = [
+    { label: "시작 신호", text: cycle.signal || "고리 신호", tone: "clay" },
+    { label: `${self}의 반응`, text: cycle.aProtect || "겉반응", tone: "blue" },
+    { label: `${partner}의 반응`, text: cycle.bProtect || "겉반응", tone: "coral" },
+    { label: "숨은 마음", text: "속감정과 욕구가 더 숨겨짐", tone: "sage" }
+  ];
+  return `
+    <section class="cycle-wheel-card" aria-label="부정적 고리 순환 원형 지도">
+      <div class="cycle-wheel">
+        <div class="wheel-center">
+          <strong>우리의<br>반복 고리</strong>
+          <span>함께 멈출 패턴</span>
+        </div>
+        ${steps.map((step, index) => `
+          <article class="wheel-step step-${index + 1} ${step.tone}">
+            <b>${index + 1}</b>
+            <strong>${escapeHtml(step.label)}</strong>
+            <p>${escapeHtml(step.text)}</p>
+          </article>
+        `).join("")}
+        <span class="wheel-arrow arrow-1">→</span>
+        <span class="wheel-arrow arrow-2">→</span>
+        <span class="wheel-arrow arrow-3">→</span>
+        <span class="wheel-arrow arrow-4">→</span>
+      </div>
+    </section>
+  `;
+}
+
+function cycleNode(label, text, color) {
+  return `<div class="cycle-node" style="--node-color:${color}"><small>${label}</small><p>${escapeHtml(text || "아직 입력되지 않았습니다")}</p></div>`;
+}
+
+function renderMissions() {
+  renderList("#missionList", visibleMissions(), "현재 단계의 미션이 없어요", "설정에서 단계를 선택하면 단계별 기본 미션이 표시됩니다.", (mission) => `
+    <article class="mission-card ${state.missionDone[mission.id] ? "done" : ""}">
+      <header><span>${mission.type === "couple" ? "공동 미션" : "개인 미션"}</span><strong>${currentStage(mission.stageId).short}</strong></header>
+      <p>${escapeHtml(mission.title)}</p>
+      <div class="mission-reflection">
+        <label>미션 후기
+          <textarea data-review-input="${mission.id}" placeholder="해보니 어땠나요? 어려웠던 점, 도움이 된 점, 다음에 바꿔볼 점을 적어보세요.">${escapeHtml(state.missionReviews[mission.id] || "")}</textarea>
+        </label>
+        ${state.missionReviews[mission.id] ? `<p><strong>저장된 후기</strong> · ${escapeHtml(state.missionReviews[mission.id])}</p>` : ""}
+      </div>
+      <div class="card-actions">
+        <button type="button" data-mission="${mission.id}">${state.missionDone[mission.id] ? "완료 취소" : "완료 표시"}</button>
+        <button type="button" data-save-review="${mission.id}">후기 저장</button>
+      </div>
+    </article>
+  `);
+}
+
+function renderRoadmap() {
+  const grouped = [
+    { phase: "1기", title: "고리를 함께 알아차리기", range: [1, 2, 3] },
+    { phase: "2기", title: "속감정과 애착욕구를 나누기", range: [4, 5, 6, 7] },
+    { phase: "3기", title: "새 반응을 유지하고 통합하기", range: [8, 9] }
+  ];
+  document.querySelector("#roadmapList").innerHTML = grouped.map((group) => `
+    <section class="roadmap-phase">
+      <header>
+        <span>${group.phase}</span>
+        <h2>${group.title}</h2>
+      </header>
+      <div class="roadmap-stage-list">
+        ${stages.filter((stage) => group.range.includes(stage.step)).map((stage) => `
+          <article class="roadmap-stage ${stage.id === state.currentStageId ? "current" : ""}">
+            <div class="stage-number">${stage.step}</div>
+            <div>
+              <h3>${stage.title}</h3>
+              <p>${stage.focus}</p>
+              <small>체크인 초점 · ${stage.checkin}</small>
+            </div>
+          </article>
+        `).join("")}
+      </div>
+    </section>
+  `).join("");
+}
+
+function visibleMissions() {
+  return [...missionBank, ...state.customMissions].filter((mission) => mission.stageId === state.currentStageId);
+}
+
+function renderSessions() {
+  renderList("#sessionList", state.sessions, "저장된 회기 정리가 없어요", "회기 전후 메모를 남기면 현재 EFT 단계와 함께 저장됩니다.", (session) => `
+    <article class="session-card">
+      <header><span>${formatDate(session.date)} · ${currentStage(session.stageId).short}</span><strong>${session.type === "after" ? "회기 후" : "회기 전"}</strong></header>
+      <p>${escapeHtml(session.topic)}</p>
+      ${session.practice ? `<p><strong>연습</strong> · ${escapeHtml(session.practice)}</p>` : ""}
+    </article>
+  `);
+}
+
+function renderList(selector, items, title, description, renderer) {
+  const container = document.querySelector(selector);
+  if (!items.length) {
+    const template = document.querySelector("#emptyTemplate").content.cloneNode(true);
+    template.querySelector("strong").textContent = title;
+    template.querySelector("p").textContent = description;
+    container.replaceChildren(template);
+    return;
+  }
+  container.innerHTML = items.map(renderer).join("");
+}
+
+function currentStage(id = state.currentStageId) {
+  return stages.find((stage) => stage.id === id) || stages[1];
+}
+
+function weekRecords() {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 7);
+  return state.checkins.filter((record) => new Date(record.date) >= cutoff);
+}
+
+function recordColor(record) {
+  if (record.need) return "var(--emo-need)";
+  if (record.primary) return "var(--emo-primary)";
+  if (record.protective) return "var(--emo-protect)";
+  return "var(--emo-new)";
+}
+
+function formatDate(date) {
+  return new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric" }).format(new Date(date));
+}
+
+function dayLabel(date) {
+  return new Intl.DateTimeFormat("ko-KR", { day: "numeric" }).format(new Date(date));
+}
+
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[char]));
+}
