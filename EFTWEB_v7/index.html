@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EFTWEB v7 - 정서중심 부부치료 보조도구</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="phone-shell">
+    <header class="app-topbar">
+      <button class="brand-mark" type="button" data-view="home" aria-label="홈으로 이동">
+        <span></span><span></span>
+      </button>
+      <strong>EFTWEB</strong>
+      <div class="top-meta">
+        <span id="todayLabel"></span>
+        <button class="avatar-button" type="button" data-view="settings" aria-label="설정">나</button>
+      </div>
+    </header>
+
+    <main class="app-scroll">
+      <section class="view active" id="home">
+        <div class="hero-copy">
+          <p class="eyebrow">TODAY · 함께 알아차리기</p>
+          <h1>서로를 이기는 것이 아니라,<br>고리를 함께 알아차리기</h1>
+        </div>
+
+        <article class="card chart-card">
+          <div class="card-head">
+            <div>
+              <p class="overline">최근 2주</p>
+              <h2>감정 강도 흐름</h2>
+            </div>
+            <span class="score-pill">평균 <strong id="avgIntensity">0.0</strong></span>
+          </div>
+          <div id="intensityChart" class="chart-wrap" aria-label="최근 감정 강도 그래프"></div>
+          <p class="hint">선이 낮아질수록 감정 강도가 내려간 날입니다.</p>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <p class="overline">CALENDAR</p>
+              <h2>감정 캘린더</h2>
+            </div>
+            <strong class="month-label" id="monthLabel"></strong>
+          </div>
+          <div id="emotionCalendar" class="calendar-grid"></div>
+          <div class="heat-legend">
+            <span>약함</span><i></i><i></i><i></i><i></i><i></i><span>강함</span>
+          </div>
+        </article>
+
+        <article class="card">
+          <p class="overline">이번 주 · EFT 층위</p>
+          <div class="layer-grid" id="layerStats"></div>
+        </article>
+
+        <article class="stage-card" id="stageCard"></article>
+        <article class="intervention-card" id="homeIntervention"></article>
+
+        <div class="quick-grid">
+          <button class="quick-card" type="button" data-view="checkin">
+            <span class="icon clay" data-lucide="heart-pulse" aria-hidden="true"></span>
+            <strong>감정 체크인</strong>
+            <small>3단계로 기록하기</small>
+          </button>
+          <button class="quick-card" type="button" data-view="cycle">
+            <span class="icon sky" data-lucide="refresh-cw" aria-hidden="true"></span>
+            <strong>고리 지도</strong>
+            <small>A ↔ B 패턴 보기</small>
+          </button>
+        </div>
+
+        <article class="notice">
+          <strong>사용 안내</strong>
+          <p>이 앱은 치료자를 대체하지 않는 기록·연습 보조도구입니다. 회기 사이에 감정, 고리, 욕구, 새 반응을 차분히 정리하는 데 사용하세요.</p>
+        </article>
+      </section>
+
+      <section class="view" id="checkin">
+        <div class="section-title">
+          <p class="eyebrow">EMOTION CHECK-IN</p>
+          <h1>오늘의 감정 체크인</h1>
+          <p>겉반응을 비난하기보다, 그 반응이 지키려 했던 마음을 찾아봅니다.</p>
+        </div>
+
+        <form class="card step-card" id="checkinForm">
+          <div class="stage-guide wide" id="checkinStageGuide"></div>
+          <div class="step-dots" id="stepDots"></div>
+
+          <div class="form-step active" data-step="0">
+            <div class="choice-block wide">
+              <h3>지금 관계의 느낌</h3>
+              <p>편안함에서 긴장감으로 이어지는 순서입니다. 가장 가까운 느낌을 고르거나 직접 적어주세요.</p>
+              <input type="hidden" name="weather" id="weatherInput" value="가깝고 편안함">
+              <div class="choice-grid" data-choice-field="weather">
+                <button class="active" type="button" data-value="가깝고 편안함"><small>1</small>가깝고 편안함</button>
+                <button type="button" data-value="회복하려는 중">회복하려는 중</button>
+                <button type="button" data-value="조심스럽지만 대화 가능">조심스럽지만 대화 가능</button>
+                <button type="button" data-value="서로 멀어진 느낌">서로 멀어진 느낌</button>
+                <button type="button" data-value="긴장되고 예민함"><small>5</small>긴장되고 예민함</button>
+              </div>
+              <label class="choice-custom">직접 입력
+                <input id="weatherCustomInput" placeholder="예: 말은 했지만 마음은 닫힌 느낌">
+              </label>
+            </div>
+            <label class="wide">갈등 또는 감정 장면
+              <textarea name="scene" required placeholder="언제, 어디서, 어떤 말이나 행동 때문에 감정이 올라왔나요?"></textarea>
+            </label>
+            <div class="helper-block wide">
+              <h3>자주 시작되는 장면</h3>
+              <p>비슷한 장면이 있다면 눌러서 문장 시작을 도와받을 수 있어요.</p>
+              <div class="chip-row" data-fill="scene">
+                <button type="button">답장이 늦어졌을 때</button>
+                <button type="button">표정이나 말투가 차갑게 느껴졌을 때</button>
+                <button type="button">약속이나 집안일 이야기를 하다가</button>
+                <button type="button">내 마음을 몰라주는 것 같았을 때</button>
+                <button type="button">가까워지고 싶었는데 거절처럼 느껴졌을 때</button>
+              </div>
+            </div>
+            <label class="wide">주된 감정
+              <input name="emotion" required placeholder="예: 외로움, 불안, 서운함">
+            </label>
+            <div class="helper-block primary wide">
+              <h3>감정 선택</h3>
+              <p>가까운 단어를 눌러 넣고, 필요하면 직접 고쳐 적어도 됩니다.</p>
+              <div class="chip-row" data-fill="emotion">
+                <button type="button">서운함</button>
+                <button type="button">외로움</button>
+                <button type="button">불안</button>
+                <button type="button">화</button>
+                <button type="button">두려움</button>
+                <button type="button">답답함</button>
+                <button type="button">무력감</button>
+                <button type="button">그리움</button>
+              </div>
+            </div>
+            <label>감정 강도 <output id="intensityOutput">5</output>/10
+              <input name="intensity" id="intensityInput" type="range" min="1" max="10" value="5">
+            </label>
+            <label class="wide">몸의 반응
+              <input name="body" placeholder="예: 가슴 답답함, 목이 멤, 손에 힘이 들어감">
+            </label>
+          </div>
+
+          <div class="form-step" data-step="1">
+            <label>겉으로 보인 보호반응
+              <select name="protective">
+                <option>따지고 확인했다</option>
+                <option>비난하거나 공격했다</option>
+                <option>설명하고 방어했다</option>
+                <option>침묵하거나 물러났다</option>
+                <option>괜찮은 척했다</option>
+              </select>
+            </label>
+            <label>겉감정
+              <select name="secondaryEmotion">
+                <option>화</option>
+                <option>짜증</option>
+                <option>불안</option>
+                <option>무기력</option>
+                <option>냉담함</option>
+              </select>
+            </label>
+            <div class="helper-block primary wide">
+              <h3>그 아래의 속감정</h3>
+              <p>겉으로는 화가 나 보여도, 아래에는 더 여린 감정이 숨어 있을 수 있어요.</p>
+              <div class="chip-row" data-fill="primary">
+                <button type="button">외로웠다</button>
+                <button type="button">버려질까 두려웠다</button>
+                <button type="button">중요하지 않은 사람 같았다</button>
+                <button type="button">부족한 사람처럼 느껴졌다</button>
+              </div>
+            </div>
+            <label class="wide">속감정
+              <textarea name="primary" placeholder="예: 사실은 내가 중요하지 않은 사람처럼 느껴져서 무서웠다"></textarea>
+            </label>
+            <div class="helper-block need wide">
+              <h3>바랐던 애착욕구</h3>
+              <p>내가 정말 원했던 반응을 요청의 말로 바꿔봅니다.</p>
+              <div class="chip-row" data-fill="need">
+                <button type="button">내 편이라고 느끼고 싶었다</button>
+                <button type="button">잠깐 멈추고 들어주길 바랐다</button>
+                <button type="button">나를 선택한다는 확신이 필요했다</button>
+                <button type="button">비난 없이 가까이 오길 바랐다</button>
+              </div>
+            </div>
+            <label class="wide">배우자에게 바랐던 반응
+              <textarea name="need" placeholder="예: 잠깐 멈추고 내 마음을 들어주길 바랐다"></textarea>
+            </label>
+          </div>
+
+          <div class="form-step" data-step="2">
+            <div class="helper-block new wide">
+              <h3>새 반응으로 바꿔 말하기</h3>
+              <p>“당신은 왜 그래?” 대신 “지금 내가 멀어진 느낌이 들어 불안해”처럼 말해봅니다.</p>
+            </div>
+            <label class="wide">다음번에 시도할 안전한 표현
+              <textarea name="newResponse" placeholder="다음 갈등에서 시도해보고 싶은 새 반응을 적어주세요."></textarea>
+            </label>
+            <label>공유 범위
+              <select name="share">
+                <option value="private">나만 보기</option>
+                <option value="partner">배우자와 공유</option>
+                <option value="therapist">치료자와 공유</option>
+                <option value="both">배우자와 치료자에게 공유</option>
+              </select>
+            </label>
+            <label>EFT 단계
+              <select name="stageId" id="stageSelect"></select>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button class="ghost-button" type="button" id="prevStep">이전</button>
+            <button class="primary-button" type="button" id="nextStep">다음</button>
+            <button class="primary-button hidden" type="submit" id="saveCheckin">저장</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="view" id="records">
+        <div class="section-title">
+          <p class="eyebrow">EMOTION RECORDS</p>
+          <h1>감정 기록</h1>
+          <p>색과 카드로 감정의 층위와 강도를 한눈에 봅니다.</p>
+        </div>
+        <div class="segmented" id="recordFilter">
+          <button class="active" type="button" data-filter="all">전체</button>
+          <button type="button" data-filter="private">나만</button>
+          <button type="button" data-filter="shared">공유</button>
+        </div>
+        <div class="list" id="recordList"></div>
+      </section>
+
+      <section class="view" id="share">
+        <div class="section-title">
+          <p class="eyebrow">SHARED SPACE</p>
+          <h1>함께 보기</h1>
+          <p>평가보다 이해를 위한 공간입니다. 공유로 선택한 기록만 모입니다.</p>
+        </div>
+        <div class="list" id="sharedList"></div>
+      </section>
+
+      <section class="view" id="cycle">
+        <div class="section-title">
+          <p class="eyebrow">NEGATIVE CYCLE</p>
+          <h1>우리의 부정적 고리</h1>
+          <p>문제는 한 사람이 아니라, 두 사람 사이에서 반복되는 고리입니다.</p>
+        </div>
+        <article class="signal-card">
+          <span data-lucide="zap" aria-hidden="true"></span>
+          <div>
+            <p class="overline">고리가 시작되는 신호</p>
+            <strong id="cycleSignalText">답장이 늦거나 표정이 굳어질 때</strong>
+          </div>
+        </article>
+        <article class="intervention-card compact" id="cycleIntervention"></article>
+        <form class="card cycle-form" id="cycleForm">
+          <label class="wide">고리 시작 신호
+            <input name="signal" placeholder="예: 답장이 늦거나 표정이 굳어질 때">
+          </label>
+          <label><span id="selfProtectLabel">나의 겉반응</span>
+            <input name="aProtect" placeholder="따지고 확인한다">
+          </label>
+          <label><span id="partnerProtectLabel">배우자의 겉반응</span>
+            <input name="bProtect" placeholder="침묵하고 물러난다">
+          </label>
+          <label><span id="selfUnderLabel">나의 속감정·욕구</span>
+            <textarea name="aUnder" placeholder="외롭다. 나를 선택한다는 확신이 필요하다."></textarea>
+          </label>
+          <label><span id="partnerUnderLabel">배우자의 속감정·욕구</span>
+            <textarea name="bUnder" placeholder="부족하게 느껴진다. 비난 없이 들어주길 바란다."></textarea>
+          </label>
+          <label class="wide">고리를 멈추는 공동 문장
+            <input name="repair" placeholder="지금 우리 고리에 들어간 것 같아. 잠깐 멈추고 다시 말해보자.">
+          </label>
+          <button class="primary-button wide" type="submit">고리 지도 저장</button>
+        </form>
+        <div id="cycleMap" class="cycle-map"></div>
+      </section>
+
+      <section class="view" id="more">
+        <div class="section-title">
+          <p class="eyebrow">PRACTICE</p>
+          <h1>미션과 회기 정리</h1>
+          <p>자주 쓰는 기능을 짧은 카드로 모았습니다.</p>
+        </div>
+        <div class="menu-grid">
+          <button type="button" data-view="roadmap">EFT 3기 9단계 로드맵</button>
+          <button type="button" data-view="missions">EFT 단계별 미션</button>
+          <button type="button" data-view="sessions">회기 전후 정리</button>
+          <button type="button" data-view="share">공유 공간</button>
+          <button type="button" data-view="examples">기능 예시 보기</button>
+          <button type="button" data-view="settings">설정</button>
+        </div>
+      </section>
+
+      <section class="view" id="roadmap">
+        <div class="section-title">
+          <p class="eyebrow">EFT ROADMAP</p>
+          <h1>3기 9단계 전체 로드맵</h1>
+          <p>정서중심 부부치료는 갈등을 이기는 법보다, 고리를 알아차리고 속마음을 나누며 새 반응을 유지하는 흐름을 연습합니다.</p>
+        </div>
+        <div class="roadmap-summary">
+          <article>
+            <strong>1기</strong>
+            <span>고리 알아차리기</span>
+            <p>서로를 탓하기보다 반복되는 부정적 고리를 함께 봅니다.</p>
+          </article>
+          <article>
+            <strong>2기</strong>
+            <span>속감정 나누기</span>
+            <p>겉반응 아래의 두려움, 외로움, 애착욕구를 더 안전하게 말합니다.</p>
+          </article>
+          <article>
+            <strong>3기</strong>
+            <span>새 반응 유지하기</span>
+            <p>새로운 대화와 회복 방식을 일상 문제 해결에 연결합니다.</p>
+          </article>
+        </div>
+        <div class="roadmap-list" id="roadmapList"></div>
+      </section>
+
+      <section class="view" id="missions">
+        <div class="section-title">
+          <p class="eyebrow">MISSIONS</p>
+          <h1>EFT 단계별 미션</h1>
+          <p>지금 단계에 맞는 개인 미션과 공동 미션을 연습합니다.</p>
+        </div>
+        <article class="intervention-card compact" id="missionIntervention"></article>
+        <form class="mission-add card" id="missionForm">
+          <select name="type">
+            <option value="personal">개인 미션</option>
+            <option value="couple">공동 미션</option>
+          </select>
+          <input name="title" placeholder="새 미션 추가">
+          <button class="primary-button" type="submit">추가</button>
+        </form>
+        <div class="list" id="missionList"></div>
+      </section>
+
+      <section class="view" id="examples">
+        <div class="section-title">
+          <p class="eyebrow">SCREENSHOT GUIDE</p>
+          <h1>기능을 이렇게 써요</h1>
+          <p>아래 카드는 실제 저장 데이터가 아니라, 각 기능이 어떤 흐름으로 연결되는지 보여주는 안내입니다.</p>
+        </div>
+        <div class="example-gallery">
+          <article class="example-shot featured">
+            <p class="overline">홈</p>
+            <h3>내 기록이 쌓이면 관계 흐름이 보입니다</h3>
+            <p>체크인을 저장할수록 감정 강도 그래프, 감정 캘린더, EFT 층위 숫자가 함께 갱신됩니다.</p>
+            <figure class="screenshot-frame">
+              <img src="assets/screenshots/home-full.png" alt="홈 화면 예시: 감정 강도 흐름 카드">
+            </figure>
+          </article>
+          <article class="example-shot">
+            <p class="overline">체크인</p>
+            <h3>장면에서 새 반응까지 짧게 정리합니다</h3>
+            <figure class="screenshot-frame">
+              <img src="assets/screenshots/home-check.png" alt="체크인 예시: 관계 느낌과 감정 기록 흐름">
+            </figure>
+          </article>
+          <article class="example-shot">
+            <p class="overline">고리</p>
+            <h3>저장한 기록을 고리 지도로 연결합니다</h3>
+            <p>기록 카드의 ‘고리에 반영’을 누르면 장면과 내 반응이 고리 지도 입력으로 넘어갑니다. 저장 후에는 순환 원형 그림으로 반복 패턴을 확인합니다.</p>
+            <figure class="screenshot-frame">
+              <img src="assets/screenshots/full.png" alt="고리와 앱 화면 예시">
+            </figure>
+          </article>
+          <article class="example-shot">
+            <p class="overline">미션</p>
+            <h3>EFT 단계에 따라 과제가 달라집니다</h3>
+            <p>초기에는 고리 알아차리기, 중기에는 속감정 표현, 후기에는 새 대화 유지로 달라집니다.</p>
+            <figure class="screenshot-frame">
+              <img src="assets/screenshots/home-whole.png" alt="미션과 전체 흐름 예시">
+            </figure>
+          </article>
+          <article class="example-shot">
+            <p class="overline">공유</p>
+            <h3>선택한 기록만 함께 봅니다</h3>
+            <p>나만 보기로 저장한 기록은 개인 기록에 남고, 공유로 바꾼 기록만 함께 보기 공간에 모입니다.</p>
+          </article>
+          <article class="example-shot">
+            <p class="overline">회기 정리</p>
+            <h3>상담 전후의 초점을 잃지 않습니다</h3>
+            <p>회기 전에는 다루고 싶은 장면을, 회기 후에는 새롭게 알게 된 감정과 이번 주 연습을 남깁니다.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="sessions">
+        <div class="section-title">
+          <p class="eyebrow">SESSION NOTE</p>
+          <h1>회기 전후 정리</h1>
+          <p>상담 전 다루고 싶은 주제와 상담 후 연습할 반응을 정리합니다.</p>
+        </div>
+        <form class="card" id="sessionForm">
+          <label>구분
+            <select name="type">
+              <option value="before">회기 전</option>
+              <option value="after">회기 후</option>
+            </select>
+          </label>
+          <label class="wide">이번 회기에 다루고 싶은 것 / 새롭게 알게 된 것
+            <textarea name="topic" required></textarea>
+          </label>
+          <label class="wide">이번 주 연습할 반응 또는 과제
+            <textarea name="practice"></textarea>
+          </label>
+          <button class="primary-button wide" type="submit">정리 저장</button>
+        </form>
+        <div class="list" id="sessionList"></div>
+      </section>
+
+      <section class="view" id="settings">
+        <div class="section-title">
+          <p class="eyebrow">SETTINGS</p>
+          <h1>설정</h1>
+          <p>현재 EFT 단계와 데이터 백업을 관리합니다.</p>
+        </div>
+        <article class="card settings-card">
+          <label>내 이름
+            <input id="myNameInput" placeholder="예: 나, 지훈">
+          </label>
+          <label>파트너 이름
+            <input id="partnerNameInput" placeholder="비워두면 ‘배우자’로 표시됩니다">
+          </label>
+          <label>현재 EFT 단계
+            <select id="currentStageSelect"></select>
+          </label>
+          <button class="ghost-button" type="button" id="exportData">백업 파일 만들기</button>
+          <label class="file-label">백업 가져오기
+            <input type="file" id="importData" accept="application/json">
+          </label>
+          <button class="danger-button" type="button" id="resetData">모든 데이터 삭제</button>
+        </article>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="주요 메뉴">
+      <button class="active" type="button" data-view="home"><span data-lucide="house"></span><strong>홈</strong></button>
+      <button type="button" data-view="checkin"><span data-lucide="heart-pulse"></span><strong>체크인</strong></button>
+      <button type="button" data-view="records"><span data-lucide="book-open"></span><strong>기록</strong></button>
+      <button type="button" data-view="cycle"><span data-lucide="refresh-cw"></span><strong>고리</strong></button>
+      <button type="button" data-view="more"><span data-lucide="plus"></span><strong>더보기</strong></button>
+    </nav>
+  </div>
+
+  <template id="emptyTemplate">
+    <div class="empty-card">
+      <span>·</span>
+      <strong></strong>
+      <p></p>
+    </div>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
