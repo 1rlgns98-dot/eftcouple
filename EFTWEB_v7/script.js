@@ -222,8 +222,18 @@ function showView(id) {
     const main = ["home", "checkin", "records", "cycle", "more"].includes(view) ? view : "more";
     button.classList.toggle("active", button.dataset.view === main);
   });
-  document.querySelector(".app-scroll").scrollTo({ top: 0, behavior: "smooth" });
   renderAll();
+  scrollAppToTop();
+}
+
+function scrollAppToTop() {
+  const scroller = document.querySelector(".app-scroll");
+  if (!scroller) return;
+  try {
+    scroller.scrollTo({ top: 0, behavior: "smooth" });
+  } catch {
+    scroller.scrollTop = 0;
+  }
 }
 
 function bindCheckin() {
@@ -272,15 +282,20 @@ function bindCheckin() {
       intensity: Number(data.intensity)
     });
     saveState();
-    form.reset();
-    document.querySelector("#weatherInput").value = "가깝고 편안함";
-    document.querySelector("#weatherCustomInput").value = "";
-    document.querySelectorAll("[data-choice-field='weather'] button").forEach((button, index) => button.classList.toggle("active", index === 0));
-    document.querySelector("#intensityInput").value = 5;
-    document.querySelector("#intensityOutput").textContent = "5";
-    currentStep = 0;
-    showView("records");
+    resetCheckinForm(form);
+    requestAnimationFrame(() => showView("records"));
   });
+  moveStep(0);
+}
+
+function resetCheckinForm(form) {
+  form.reset();
+  document.querySelector("#weatherInput").value = "가깝고 편안함";
+  document.querySelector("#weatherCustomInput").value = "";
+  document.querySelectorAll("[data-choice-field='weather'] button").forEach((button, index) => button.classList.toggle("active", index === 0));
+  document.querySelector("#intensityInput").value = 5;
+  document.querySelector("#intensityOutput").textContent = "5";
+  currentStep = 0;
   moveStep(0);
 }
 
