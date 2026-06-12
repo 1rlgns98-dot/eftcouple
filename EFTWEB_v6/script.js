@@ -150,6 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function loadState() {
   const fallback = {
     currentStageId: "stage2",
+    profile: { myName: "나", partnerName: "" },
     checkins: [],
     cycles: [],
     customMissions: [],
@@ -157,10 +158,23 @@ function loadState() {
     sessions: []
   };
   try {
-    return { ...fallback, ...JSON.parse(localStorage.getItem(STORAGE_KEY)) };
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    return normalizeState({ ...fallback, ...saved });
   } catch {
     return fallback;
   }
+}
+
+function normalizeState(nextState) {
+  return {
+    ...nextState,
+    profile: { myName: "나", partnerName: "", ...(nextState.profile || {}) },
+    checkins: nextState.checkins || [],
+    cycles: nextState.cycles || [],
+    customMissions: nextState.customMissions || [],
+    missionDone: nextState.missionDone || {},
+    sessions: nextState.sessions || []
+  };
 }
 
 function saveState() {
@@ -221,7 +235,20 @@ function bindCheckin() {
       const button = event.target.closest("button");
       if (!button) return;
       const field = document.querySelector(`[name="${group.dataset.fill}"]`);
-      field.value = field.value ? `${field.value}, ${button.textContent}` : button.textContent;
+      if (field.tagName === "TEXTAREA") {
+        field.value = field.value ? `${field.value}\n${button.textContent}` : button.textContent;
+      } else {
+        field.value = field.value ? `${field.value}, ${button.textContent}` : button.textContent;
+      }
+    });
+  });
+  document.querySelectorAll("[data-choice-field]").forEach((group) => {
+    group.addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      const field = document.querySelector(`[name="${group.dataset.choiceField}"]`);
+      field.value = button.dataset.value;
+      group.querySelectorAll("button").forEach((item) => item.classList.toggle("active", item === button));
     });
   });
   document.querySelector("#checkinForm").addEventListener("submit", (event) => {
@@ -231,11 +258,14 @@ function bindCheckin() {
     state.checkins.unshift({
       id: uid(),
       date: new Date().toISOString(),
+      author: displayName("self"),
       ...data,
       intensity: Number(data.intensity)
     });
     saveState();
     form.reset();
+    document.querySelector("#weatherInput").value = "조심스럽지만 대화 가능";
+    document.querySelectorAll("[data-choice-field='weather'] button").forEach((button, index) => button.classList.toggle("active", index === 0));
     document.querySelector("#intensityInput").value = 5;
     document.querySelector("#intensityOutput").textContent = "5";
     currentStep = 0;
@@ -312,6 +342,19 @@ function bindSessions() {
 }
 
 function bindSettings() {
+  document.querySelector("#myNameInput").addEventListener("input", (event) => {
+    state.profile.myName = event.target.value.trim() || "나";
+    saveState();
+    renderProfileLabels();
+    renderRecords();
+    renderCycle();
+  });
+  document.querySelector("#partnerNameInput").addEventListener("input", (event) => {
+    state.profile.partnerName = event.target.value.trim();
+    saveState();
+    renderProfileLabels();
+    renderCycle();
+  });
   document.querySelector("#currentStageSelect").addEventListener("change", (event) => {
     state.currentStageId = event.target.value;
     saveState();
@@ -330,7 +373,7 @@ function bindSettings() {
   document.querySelector("#importData").addEventListener("change", async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    state = { ...loadState(), ...JSON.parse(await file.text()) };
+    state = normalizeState({ ...loadState(), ...JSON.parse(await file.text()) });
     saveState();
     hydrateStageSelects();
     renderAll();
@@ -355,6 +398,7 @@ function hydrateStageSelects() {
 function renderAll() {
   document.querySelector("#todayLabel").textContent = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", weekday: "short" }).format(new Date());
   hydrateStageSelects();
+  renderProfileLabels();
   renderHome();
   renderCheckinGuide();
   renderRecords();
@@ -362,6 +406,23 @@ function renderAll() {
   renderCycle();
   renderMissions();
   renderSessions();
+}
+
+function renderProfileLabels() {
+  const self = displayName("self");
+  const partner = displayName("partner");
+  document.querySelector(".avatar-button").textContent = self.slice(0, 2);
+  document.querySelector("#myNameInput").value = state.profile.myName === "나" ? "" : state.profile.myName;
+  document.querySelector("#partnerNameInput").value = state.profile.partnerName || "";
+  document.querySelector("#selfProtectLabel").textContent = `${self}의 겉반응`;
+  document.querySelector("#partnerProtectLabel").textContent = `${partner}의 겉반응`;
+  document.querySelector("#selfUnderLabel").textContent = `${self}의 속감정·욕구`;
+  document.querySelector("#partnerUnderLabel").textContent = `${partner}의 속감정·욕구`;
+}
+
+function displayName(which) {
+  if (which === "partner") return state.profile.partnerName || "배우자";
+  return state.profile.myName || "나";
 }
 
 function renderHome() {
@@ -577,21 +638,36 @@ function draftCycleFromRecord(record) {
 
 function renderCycle() {
   const latest = state.cycles[0];
+  const self = displayName("self");
+  const partner = displayName("partner");
   document.querySelector("#cycleSignalText").textContent = latest?.signal || "아직 저장된 고리 신호가 없습니다";
   if (!latest) {
     renderList("#cycleMap", [], "고리 지도가 비어 있어요", "기록 카드의 ‘고리에 반영’을 누르거나 아래 양식으로 첫 고리 지도를 저장하세요.", () => "");
     return;
   }
   document.querySelector("#cycleMap").innerHTML = `
+    <div class="cycle-overview">
+      <div class="cycle-trigger">
+        <small>시작 신호</small>
+        <strong>${escapeHtml(latest.signal)}</strong>
+      </div>
+      <div class="cycle-flow">
+        <div><span>${escapeHtml(self)}</span><p>${escapeHtml(latest.aProtect || "겉반응 미입력")}</p></div>
+        <b>→</b>
+        <div><span>${escapeHtml(partner)}</span><p>${escapeHtml(latest.bProtect || "겉반응 미입력")}</p></div>
+        <b>→</b>
+        <div><span>반복 고리</span><p>서로의 속감정과 욕구가 더 숨겨짐</p></div>
+      </div>
+    </div>
     <div class="cycle-pair">
       <div class="cycle-column">
-        ${cycleNode("A 겉반응", latest.aProtect, "var(--emo-protect)")}
-        ${cycleNode("A 속감정·욕구", latest.aUnder, "var(--emo-primary)")}
+        ${cycleNode(`${self}의 겉반응`, latest.aProtect, "var(--emo-protect)")}
+        ${cycleNode(`${self}의 속감정·욕구`, latest.aUnder, "var(--emo-primary)")}
       </div>
       <div class="cycle-arrow">↔</div>
       <div class="cycle-column">
-        ${cycleNode("B 겉반응", latest.bProtect, "var(--emo-protect)")}
-        ${cycleNode("B 속감정·욕구", latest.bUnder, "var(--emo-need)")}
+        ${cycleNode(`${partner}의 겉반응`, latest.bProtect, "var(--emo-protect)")}
+        ${cycleNode(`${partner}의 속감정·욕구`, latest.bUnder, "var(--emo-need)")}
       </div>
     </div>
     <div class="repair-card">
